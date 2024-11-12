@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftSoup
+import Kingfisher
 
 struct BookSearchResults: View {
     let searchQuery: String
@@ -19,17 +20,15 @@ struct BookSearchResults: View {
                     ForEach(searchResults, id: \.url) { result in
                         NavigationLink(destination: BookDetailView(url: result.url)) {
                             HStack(spacing: 12) {
-                                AsyncImage(url: URL(string: result.imageUrl)) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 60, height: 90)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                } placeholder: {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 60, height: 90)
-                                }
+                                KFImage(URL(string: result.imageUrl))
+                                    .placeholder {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.gray.opacity(0.3))
+                                    }
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 60, height: 90)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(result.title)

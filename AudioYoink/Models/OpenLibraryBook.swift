@@ -1,6 +1,7 @@
 import Foundation
+import Defaults
 
-struct OpenLibraryBook: Identifiable, Equatable {
+struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable {
     let id: String
     let title: String
     let author: String
@@ -32,7 +33,37 @@ struct OpenLibraryBook: Identifiable, Equatable {
         }
     }
     
+    enum CodingKeys: String, CodingKey {
+        case id, title, author, year, coverUrl, publisher, genres
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        author = try container.decode(String.self, forKey: .author)
+        year = try container.decode(Int.self, forKey: .year)
+        coverUrl = try container.decodeIfPresent(URL.self, forKey: .coverUrl)
+        publisher = try container.decode(String.self, forKey: .publisher)
+        genres = try container.decode([String].self, forKey: .genres)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(author, forKey: .author)
+        try container.encode(year, forKey: .year)
+        try container.encode(coverUrl, forKey: .coverUrl)
+        try container.encode(publisher, forKey: .publisher)
+        try container.encode(genres, forKey: .genres)
+    }
+    
     static func == (lhs: OpenLibraryBook, rhs: OpenLibraryBook) -> Bool {
         return lhs.id == rhs.id
     }
 } 
+
+extension Defaults.Keys {
+    static let searchHistory = Key<[OpenLibraryBook]>("searchHistory", default: [])
+}

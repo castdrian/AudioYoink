@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftSoup
+import Defaults
 
 struct ContentView: View {
     @State private var searchText = ""
@@ -21,6 +22,7 @@ struct ContentView: View {
     @State private var isAutocompleting = false
     @State private var autocompleteTask: Task<Void, Never>?
     @State private var shouldPerformSearch = false
+    @Default(.searchHistory) private var searchHistory
     
     var body: some View {
         NavigationView {
@@ -38,26 +40,9 @@ struct ContentView: View {
                             isSearchFieldFocused: isSearchFieldFocused
                         )
                     } else if isSearchFieldFocused && !autoCompleteResults.isEmpty {
-                        VStack {
-                            ScrollView {
-                                LazyVStack(spacing: 8) {
-                                    ForEach(autoCompleteResults) { book in
-                                        AutocompleteRow(book: book)
-                                            .onTapGesture {
-                                                selectedBook = book
-                                                searchText = book.title
-                                                isSearchFieldFocused = false
-                                                autoCompleteResults = []
-                                                performSearch()
-                                            }
-                                    }
-                                }
-                                .padding()
-                            }
-                            .background(.background)
+                        AutocompleteView(books: autoCompleteResults) { book in
+                            handleAutocompleteTap(book)
                         }
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: autoCompleteResults)
-                        .transition(.opacity)
                     } else {
                         Spacer()
                         VStack(spacing: 20) {
@@ -65,35 +50,18 @@ struct ContentView: View {
                                 .font(.system(size: 60))
                                 .foregroundStyle(.tint)
                             
-                            HStack {
-                                Text("tokybook.com")
-                                    .font(.system(.body, design: .monospaced))
-                                
-                                if siteStatus.isChecking {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                } else {
-                                    Image(systemName: siteStatus.isReachable ? 
-                                        "checkmark.circle.fill" : "x.circle.fill")
-                                    .foregroundColor(siteStatus.isReachable ? 
-                                        .green : .red)
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color(.systemGray6))
-                            .clipShape(Capsule())
+                            SiteStatusView(siteStatus: siteStatus)
                             
-                            if !siteStatus.isChecking {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    ConnectionDetailRow(label: "Latency", 
-                                        value: "\(Int(siteStatus.latency * 1000))ms")
-                                    ConnectionDetailRow(label: "Speed", 
-                                        value: "\(String(format: "%.1f", siteStatus.speed)) Mbps")
-                                }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
+                            if !searchHistory.isEmpty {
+                                SearchHistoryView(
+                                    searchHistory: searchHistory,
+                                    onTap: handleAutocompleteTap,
+                                    onClear: {
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            searchHistory = []
+                                        }
+                                    }
+                                )
                             }
                         }
                         Spacer()
@@ -253,8 +221,26 @@ struct ContentView: View {
                 }
             }
         } catch {
-            print("Autocomplete error: \(error)")
+            await MainActor.run {
+                autoCompleteResults = []
+            }
         }
+    }
+    
+    private func handleAutocompleteTap(_ book: OpenLibraryBook) {
+        selectedBook = book
+        searchText = book.title
+        isSearchFieldFocused = false
+        autoCompleteResults = []
+        
+        if !searchHistory.contains(where: { $0.id == book.id }) {
+            searchHistory.insert(book, at: 0)
+            if searchHistory.count > 10 {
+                searchHistory.removeLast()
+            }
+        }
+        
+        performSearch()
     }
 }
 

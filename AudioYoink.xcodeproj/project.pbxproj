@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1067C52CE373470047E1CA /* SwiftSoup */; };
+		3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6C39F42CE3DF5F003216F8 /* Kingfisher */; };
+		3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 3AB996E42CE3D1EB00EFD84E /* Defaults */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +29,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */,
+				3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */,
 				3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +75,8 @@
 			name = AudioYoink;
 			packageProductDependencies = (
 				3A1067C52CE373470047E1CA /* SwiftSoup */,
+				3AB996E42CE3D1EB00EFD84E /* Defaults */,
+				3A6C39F42CE3DF5F003216F8 /* Kingfisher */,
 			);
 			productName = AudioYoink;
 			productReference = 3A1067B32CE371520047E1CA /* AudioYoink.app */;
@@ -88,6 +94,7 @@
 				TargetAttributes = {
 					3A1067B22CE371520047E1CA = {
 						CreatedOnToolsVersion = 16.1;
+						LastSwiftMigration = 1610;
 					};
 				};
 			};
@@ -102,6 +109,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				3AB996E32CE3D1EB00EFD84E /* XCRemoteSwiftPackageReference "Defaults" */,
+				3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3A1067B42CE371520047E1CA /* Products */;
@@ -258,6 +267,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
@@ -278,6 +288,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "AudioYoink/KeyboardCache/AudioYoink-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -288,6 +300,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
@@ -308,6 +321,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "AudioYoink/KeyboardCache/AudioYoink-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -345,6 +359,22 @@
 				minimumVersion = 2.7.6;
 			};
 		};
+		3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.1.0;
+			};
+		};
+		3AB996E32CE3D1EB00EFD84E /* XCRemoteSwiftPackageReference "Defaults" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Defaults";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.2.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -352,6 +382,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		3A6C39F42CE3DF5F003216F8 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+		3AB996E42CE3D1EB00EFD84E /* Defaults */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3AB996E32CE3D1EB00EFD84E /* XCRemoteSwiftPackageReference "Defaults" */;
+			productName = Defaults;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
