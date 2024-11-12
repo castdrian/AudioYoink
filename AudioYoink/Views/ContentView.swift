@@ -8,28 +8,19 @@
 import SwiftUI
 import SwiftSoup
 
-struct SiteStatus {
-    var isChecking = true
-    var isReachable = false
-    var latency: TimeInterval = 0
-    var speed: Double = 0
-    
-    mutating func update(isReachable: Bool, latency: TimeInterval, speed: Double) {
-        self.isChecking = false
-        self.isReachable = isReachable
-        self.latency = latency
-        self.speed = speed
-    }
-}
-
 struct ContentView: View {
     @State private var searchText = ""
     @State private var searchResults: [(title: String, url: String)] = []
+    @State private var autoCompleteResults: [OpenLibraryBook] = []
+    @State private var selectedBook: OpenLibraryBook?
     @State private var isSearching = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var siteStatus = SiteStatus()
     @FocusState private var isSearchFieldFocused: Bool
+    @State private var isAutocompleting = false
+    @State private var autocompleteTask: Task<Void, Never>?
+    @State private var shouldPerformSearch = false
     
     var body: some View {
         NavigationView {
@@ -41,7 +32,33 @@ struct ContentView: View {
                     }
                 
                 VStack(spacing: 0) {
-                    if searchResults.isEmpty && !isSearching {
+                    if shouldPerformSearch || isSearching || !searchResults.isEmpty {
+                        BookSearchResults(
+                            searchQuery: searchText,
+                            isSearchFieldFocused: isSearchFieldFocused
+                        )
+                    } else if isSearchFieldFocused && !autoCompleteResults.isEmpty {
+                        VStack {
+                            ScrollView {
+                                LazyVStack(spacing: 8) {
+                                    ForEach(autoCompleteResults) { book in
+                                        AutocompleteRow(book: book)
+                                            .onTapGesture {
+                                                selectedBook = book
+                                                searchText = book.title
+                                                isSearchFieldFocused = false
+                                                autoCompleteResults = []
+                                                performSearch()
+                                            }
+                                    }
+                                }
+                                .padding()
+                            }
+                            .background(.background)
+                        }
+                        .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: autoCompleteResults)
+                        .transition(.opacity)
+                    } else {
                         Spacer()
                         VStack(spacing: 20) {
                             Image(systemName: "headphones.circle.fill")
@@ -58,8 +75,8 @@ struct ContentView: View {
                                 } else {
                                     Image(systemName: siteStatus.isReachable ? 
                                         "checkmark.circle.fill" : "x.circle.fill")
-                                        .foregroundColor(siteStatus.isReachable ? 
-                                            .green : .red)
+                                    .foregroundColor(siteStatus.isReachable ? 
+                                        .green : .red)
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -80,31 +97,56 @@ struct ContentView: View {
                             }
                         }
                         Spacer()
-                    } else {
-                        BookSearchResults(
-                            searchQuery: searchText,
-                            isSearchFieldFocused: isSearchFieldFocused
-                        )
                     }
                 }
                 .safeAreaInset(edge: .bottom) {
-                    VStack(spacing: 0) {
-                        Divider()
-                        SearchBar(text: $searchText, onClear: {
-                            withAnimation {
-                                searchText = ""
-                                searchResults = []
-                                isSearching = false
-                                isSearchFieldFocused = false
-                            }
-                        }) {
+                    SearchBar(text: $searchText, onClear: {
+                        withAnimation {
+                            searchText = ""
+                            searchResults = []
+                            autoCompleteResults = []
+                            isSearching = false
                             isSearchFieldFocused = false
-                            performSearch()
+                            shouldPerformSearch = false
                         }
-                        .focused($isSearchFieldFocused)
-                        .padding(.vertical, 8)
-                        .background(.background)
+                    }) {
+                        isSearchFieldFocused = false
+                        autoCompleteResults = []
+                        performSearch()
                     }
+                    .focused($isSearchFieldFocused)
+                    .padding(.vertical, 8)
+                    .background(.background)
+                }
+            }
+            .onChange(of: searchText) { oldValue, newValue in
+                autocompleteTask?.cancel()
+                
+                if isSearching || shouldPerformSearch {
+                    return
+                }
+                
+                if searchText.count < 2 {
+                    withAnimation {
+                        autoCompleteResults = []
+                        isAutocompleting = false
+                    }
+                    return
+                }
+                
+                if isSearchFieldFocused {
+                    isAutocompleting = true
+                    
+                    autocompleteTask = Task {
+                        if !Task.isCancelled {
+                            await performAutocomplete()
+                        }
+                    }
+                }
+            }
+            .onChange(of: isSearchFieldFocused) { oldValue, newValue in
+                if !newValue {
+                    autoCompleteResults = []
                 }
             }
             .task {
@@ -142,21 +184,23 @@ struct ContentView: View {
     func performSearch() {
         guard !searchText.isEmpty else { return }
         
+        shouldPerformSearch = true
         isSearching = true
-        searchResults = []
         
         Task {
             do {
                 let results = try await searchBook(query: searchText)
-                DispatchQueue.main.async {
+                await MainActor.run {
                     searchResults = results
                     isSearching = false
+                    shouldPerformSearch = false
                 }
             } catch {
-                DispatchQueue.main.async {
+                await MainActor.run {
                     errorMessage = error.localizedDescription
                     showError = true
                     isSearching = false
+                    shouldPerformSearch = false
                 }
             }
         }
@@ -182,6 +226,34 @@ struct ContentView: View {
             let title = try link?.text() ?? ""
             let url = try link?.attr("href") ?? ""
             return (title: title, url: url)
+        }
+    }
+    
+    func performAutocomplete() async {
+        isAutocompleting = true
+        defer {
+            isAutocompleting = false
+        }
+        
+        let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        guard let url = URL(string: "https://openlibrary.org/search.json?q=\(query)&fields=key,title,author_name,first_publish_year,cover_i,publisher,subject&limit=10") else {
+            return
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let docs = json?["docs"] as? [[String: Any]] ?? []
+            
+            if !Task.isCancelled {
+                await MainActor.run {
+                    withAnimation(.spring()) {
+                        autoCompleteResults = docs.map { OpenLibraryBook(from: $0) }
+                    }
+                }
+            }
+        } catch {
+            print("Autocomplete error: \(error)")
         }
     }
 }

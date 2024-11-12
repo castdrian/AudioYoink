@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct AudioYoinkApp: App {
+    init() {
+        KeyboardPreloader.preloadKeyboard()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

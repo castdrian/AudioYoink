@@ -91,7 +91,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 3A1067AE2CE371520047E1CA /* Build configuration list for PBXProject "audioyoink" */;
+			buildConfigurationList = 3A1067AE2CE371520047E1CA /* Build configuration list for PBXProject "AudioYoink" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -316,7 +316,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3A1067AE2CE371520047E1CA /* Build configuration list for PBXProject "audioyoink" */ = {
+		3A1067AE2CE371520047E1CA /* Build configuration list for PBXProject "AudioYoink" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3A1067BF2CE371540047E1CA /* Debug */,
