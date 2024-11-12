@@ -6,14 +6,18 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1067C52CE373470047E1CA /* SwiftSoup */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		3A1067B32CE371520047E1CA /* audioyoink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = audioyoink.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A1067B32CE371520047E1CA /* AudioYoink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioYoink.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3A1067B52CE371520047E1CA /* audioyoink */ = {
+		3A1067B52CE371520047E1CA /* AudioYoink */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = audioyoink;
+			path = AudioYoink;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,7 +37,7 @@
 		3A1067AA2CE371520047E1CA = {
 			isa = PBXGroup;
 			children = (
-				3A1067B52CE371520047E1CA /* audioyoink */,
+				3A1067B52CE371520047E1CA /* AudioYoink */,
 				3A1067B42CE371520047E1CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +45,7 @@
 		3A1067B42CE371520047E1CA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3A1067B32CE371520047E1CA /* audioyoink.app */,
+				3A1067B32CE371520047E1CA /* AudioYoink.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3A1067B22CE371520047E1CA /* audioyoink */ = {
+		3A1067B22CE371520047E1CA /* AudioYoink */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3A1067C12CE371540047E1CA /* Build configuration list for PBXNativeTarget "audioyoink" */;
+			buildConfigurationList = 3A1067C12CE371540047E1CA /* Build configuration list for PBXNativeTarget "AudioYoink" */;
 			buildPhases = (
 				3A1067AF2CE371520047E1CA /* Sources */,
 				3A1067B02CE371520047E1CA /* Frameworks */,
@@ -61,13 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3A1067B52CE371520047E1CA /* audioyoink */,
+				3A1067B52CE371520047E1CA /* AudioYoink */,
 			);
-			name = audioyoink;
+			name = AudioYoink;
 			packageProductDependencies = (
+				3A1067C52CE373470047E1CA /* SwiftSoup */,
 			);
-			productName = audioyoink;
-			productReference = 3A1067B32CE371520047E1CA /* audioyoink.app */;
+			productName = AudioYoink;
+			productReference = 3A1067B32CE371520047E1CA /* AudioYoink.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,12 +100,15 @@
 			);
 			mainGroup = 3A1067AA2CE371520047E1CA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3A1067B42CE371520047E1CA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3A1067B22CE371520047E1CA /* audioyoink */,
+				3A1067B22CE371520047E1CA /* AudioYoink */,
 			);
 		};
 /* End PBXProject section */
@@ -251,7 +260,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"audioyoink/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
 				DEVELOPMENT_TEAM = L988J7YMK5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -260,12 +269,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.audioyoink;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -280,7 +290,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"audioyoink/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
 				DEVELOPMENT_TEAM = L988J7YMK5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -289,12 +299,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.audioyoink;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -314,7 +325,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3A1067C12CE371540047E1CA /* Build configuration list for PBXNativeTarget "audioyoink" */ = {
+		3A1067C12CE371540047E1CA /* Build configuration list for PBXNativeTarget "AudioYoink" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3A1067C22CE371540047E1CA /* Debug */,
@@ -324,6 +335,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A1067C52CE373470047E1CA /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3A1067AB2CE371520047E1CA /* Project object */;
 }
