@@ -1,0 +1,38 @@
+name: release mobile app
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios-and-release:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract app version from project.pbxproj
+        run: |
+          VERSION=$(grep -A1 'MARKETING_VERSION = ' AudioYoink.xcodeproj/project.pbxproj | tail -n1 | sed 's/.*= \(.*\);/\1/')
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build iOS app
+        run: xcodebuild archive -workspace AudioYoink.xcworkspace -scheme AudioYoink -configuration Release -destination generic/platform=iOS -archivePath build/AudioYoink.xcarchive CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_ALLOWED=NO | xcbeautify && cd build/AudioYoink.xcarchive/Products && mv Applications Payload && zip -r AudioYoink.ipa Payload && mv AudioYoink.ipa ../..",
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          files: |
+            build/AudioYoink.ipa
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          token: ${{ env.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
