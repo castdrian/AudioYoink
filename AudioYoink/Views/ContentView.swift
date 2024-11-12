@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var autocompleteTask: Task<Void, Never>?
     @State private var shouldPerformSearch = false
     @Default(.searchHistory) private var searchHistory
+    @State private var showDownloadManager = false
     
     var body: some View {
         NavigationView {
@@ -31,11 +32,12 @@ struct ContentView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isSearchFieldFocused = false
+                        hideKeyboard()
                     }
                 
                 VStack(spacing: 0) {
                     if shouldPerformSearch || isSearching || !searchResults.isEmpty {
-                        BookSearchResults(
+                        BookSearchResultsView(
                             searchQuery: searchText,
                             isSearchFieldFocused: isSearchFieldFocused
                         )
@@ -67,30 +69,43 @@ struct ContentView: View {
                         Spacer()
                     }
                 }
-                .safeAreaInset(edge: .bottom) {
-                    SearchBar(text: $searchText, onClear: {
-                        withAnimation {
-                            searchText = ""
-                            searchResults = []
-                            autoCompleteResults = []
-                            isSearching = false
-                            isSearchFieldFocused = false
-                            shouldPerformSearch = false
-                        }
-                    }) {
-                        isSearchFieldFocused = false
-                        autoCompleteResults = []
-                        performSearch()
+                
+                VStack {
+                    if !isSearchFieldFocused {
+                        Spacer()
                     }
+                    
+                    SearchBar(
+                        text: $searchText,
+                        onClear: {
+                            withAnimation {
+                                searchText = ""
+                                searchResults = []
+                                autoCompleteResults = []
+                                isSearching = false
+                                isSearchFieldFocused = false
+                                shouldPerformSearch = false
+                            }
+                        },
+                        onSubmit: {
+                            isSearchFieldFocused = false
+                            autoCompleteResults = []
+                            performSearch()
+                        },
+                        showDownloadManager: {
+                            showDownloadManager = true
+                        },
+                        isLoading: isAutocompleting
+                    )
                     .focused($isSearchFieldFocused)
-                    .padding(.vertical, 8)
-                    .background(.background)
+                    .padding(.bottom, 8)
                 }
+                .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: isSearchFieldFocused)
             }
             .onChange(of: searchText) { oldValue, newValue in
                 autocompleteTask?.cancel()
                 
-                if isSearching || shouldPerformSearch {
+                if !isSearchFieldFocused {
                     return
                 }
                 
@@ -102,14 +117,9 @@ struct ContentView: View {
                     return
                 }
                 
-                if isSearchFieldFocused {
-                    isAutocompleting = true
-                    
-                    autocompleteTask = Task {
-                        if !Task.isCancelled {
-                            await performAutocomplete()
-                        }
-                    }
+                isAutocompleting = true
+                autocompleteTask = Task(priority: .userInitiated) {
+                    await performAutocomplete()
                 }
             }
             .onChange(of: isSearchFieldFocused) { oldValue, newValue in
@@ -120,6 +130,9 @@ struct ContentView: View {
             .task {
                 await checkSiteStatus()
             }
+        }
+        .sheet(isPresented: $showDownloadManager) {
+            DownloadManagerView()
         }
     }
     
@@ -198,31 +211,34 @@ struct ContentView: View {
     }
     
     func performAutocomplete() async {
-        isAutocompleting = true
-        defer {
-            isAutocompleting = false
-        }
-        
         let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         guard let url = URL(string: "https://openlibrary.org/search.json?q=\(query)&fields=key,title,author_name,first_publish_year,cover_i,publisher,subject&limit=10") else {
+            await MainActor.run { isAutocompleting = false }
             return
         }
         
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 5
+            config.timeoutIntervalForResource = 5
+            let session = URLSession(configuration: config)
+            
+            let (data, _) = try await session.data(from: url)
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             let docs = json?["docs"] as? [[String: Any]] ?? []
             
             if !Task.isCancelled {
                 await MainActor.run {
-                    withAnimation(.spring()) {
+                    withAnimation(.easeOut(duration: 0.1)) {
                         autoCompleteResults = docs.map { OpenLibraryBook(from: $0) }
                     }
+                    isAutocompleting = false
                 }
             }
         } catch {
             await MainActor.run {
                 autoCompleteResults = []
+                isAutocompleting = false
             }
         }
     }
@@ -248,27 +264,47 @@ struct SearchBar: View {
     @Binding var text: String
     let onClear: () -> Void
     let onSubmit: () -> Void
+    let showDownloadManager: () -> Void
+    let isLoading: Bool
     
     var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            
-            TextField("Search audiobooks...", text: $text)
-                .textFieldStyle(.plain)
-                .submitLabel(.search)
-                .onSubmit(onSubmit)
-            
-            if !text.isEmpty {
-                Button(action: onClear) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+        HStack(spacing: 12) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
+                
+                TextField("Search audiobooks...", text: $text)
+                    .textFieldStyle(.plain)
+                    .submitLabel(.search)
+                    .onSubmit(onSubmit)
+                
+                if !text.isEmpty {
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .padding(.trailing, 4)
+                    } else {
+                        Button(action: onClear) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                    }
                 }
             }
+            .padding(12)
+            .background(Color(.systemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color(.systemGray3), lineWidth: 1)
+            )
+            .cornerRadius(10)
+            
+            Button(action: showDownloadManager) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.tint)
+            }
         }
-        .padding(12)
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
         .padding(.horizontal)
     }
 }
@@ -303,6 +339,15 @@ struct ConnectionDetailRow: View {
             Text(value)
                 .font(.system(.body, design: .monospaced))
         }
+    }
+}
+
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                      to: nil,
+                                      from: nil,
+                                      for: nil)
     }
 }
 

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftSoup
 import Kingfisher
 
-struct BookSearchResults: View {
+struct BookSearchResultsView: View {
     let searchQuery: String
     @State private var searchResults: [(title: String, url: String, imageUrl: String)] = []
     @State private var isSearching = false
@@ -103,7 +103,7 @@ struct BookSearchResults: View {
 
 #Preview {
     NavigationView {
-        BookSearchResults(
+        BookSearchResultsView(
             searchQuery: "he who fights with monsters",
             isSearchFieldFocused: false
         )
