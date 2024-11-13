@@ -1,84 +1,144 @@
-import Kingfisher
 import Awesome
+import Defaults
+import Kingfisher
+import SafariUI
 import SwiftSoup
 import SwiftUI
-import SafariUI
 
 struct BookSearchResultsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) private var presentationMode
+    @Default(.searchHistory) private var searchHistory
     let searchQuery: String
+    @Binding var shouldPerformSearch: Bool
     @State private var searchResults: [(title: String, url: String, imageUrl: String)] = []
     @State private var isSearching = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var selectedSource: BookSource = .tokybook
-    let isSearchFieldFocused: Bool
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var showGitHub = false
+    @State private var showDownloadManager = false
+    @State private var searchText: String = ""
+    @StateObject private var autocompleteManager = AutocompleteManager()
+    @State private var shouldDismiss = false
+
+    init(searchQuery: String, isSearchFieldFocused: Bool, shouldPerformSearch: Binding<Bool>) {
+        self.searchQuery = searchQuery
+        self._searchText = State(initialValue: searchQuery)
+        self._shouldPerformSearch = shouldPerformSearch
+    }
 
     var body: some View {
-        VStack {
-            Picker("Source", selection: $selectedSource) {
-                ForEach(BookSource.allCases, id: \.self) { source in
-                    Text(source.rawValue).tag(source)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-
-            ScrollView {
-                if isSearching {
-                    ProgressView()
-                        .padding()
-                } else if searchResults.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 40))
-                            .foregroundColor(.gray)
-                        Text("No results found")
-                            .font(.headline)
-                        Text("Try adjusting your search or switching sources")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+        ZStack {
+            VStack {
+                Picker("Source", selection: $selectedSource) {
+                    ForEach(BookSource.allCases, id: \.self) { source in
+                        Text(source.rawValue).tag(source)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
-                } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(searchResults, id: \.url) { result in
-                            NavigationLink(destination: BookDetailView(url: result.url)) {
-                                HStack(spacing: 12) {
-                                    KFImage(URL(string: result.imageUrl))
-                                        .placeholder {
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(Color.gray.opacity(0.3))
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                ScrollView {
+                    if isSearching {
+                        ProgressView()
+                            .padding()
+                    } else if searchResults.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray)
+                            Text("No results found")
+                                .font(.headline)
+                            Text("Try adjusting your search or switching sources")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding()
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(searchResults, id: \.url) { result in
+                                NavigationLink(destination: BookDetailView(url: result.url)) {
+                                    HStack(spacing: 12) {
+                                        KFImage(URL(string: result.imageUrl))
+                                            .placeholder {
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .fill(Color.gray.opacity(0.3))
+                                            }
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 60, height: 90)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(result.title)
+                                                .lineLimit(2)
+                                                .font(.system(size: 16, weight: .medium))
                                         }
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 60, height: 90)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(result.title)
-                                            .lineLimit(2)
-                                            .font(.system(size: 16, weight: .medium))
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.gray)
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(8)
                                 }
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
                             }
                         }
+                        .padding()
                     }
-                    .padding()
                 }
             }
+            if isSearchFieldFocused, !autocompleteManager.results.isEmpty {
+                AutocompleteView(books: autocompleteManager.results) { book in
+                    withAnimation {
+                        searchText = book.title
+                        isSearchFieldFocused = false
+                        autocompleteManager.clearResults()
+                        shouldDismiss = false
+
+                        if !searchHistory.contains(where: { $0.id == book.id }) {
+                            searchHistory.insert(book, at: 0)
+                            if searchHistory.count > 10 {
+                                searchHistory.removeLast()
+                            }
+                        }
+
+                        Task {
+                            await performSearch()
+                        }
+                    }
+                }
+                .zIndex(1)
+            }
         }
+        .withSearchToolbar(
+            searchText: $searchText,
+            externalFocus: Binding(
+                get: { isSearchFieldFocused },
+                set: { isSearchFieldFocused = $0 }
+            ),
+            onClear: {
+                withAnimation {
+                    searchText = ""
+                    searchResults = []
+                    shouldDismiss = true
+                    shouldPerformSearch = false
+                    dismiss()
+                }
+            },
+            onSubmit: {
+                Task {
+                    await performSearch()
+                }
+            },
+            showDownloadManager: { showDownloadManager = true }
+        )
+        .padding(.top, 8)
         .allowsHitTesting(!isSearchFieldFocused)
         .task {
             await performSearch()
@@ -107,19 +167,24 @@ struct BookSearchResultsView: View {
             SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
                 .ignoresSafeArea()
         }
+        .sheet(isPresented: $showDownloadManager) {
+            DownloadManagerView()
+        }
         .onDisappear {
-            NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
+            if shouldDismiss {
+                NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
+            }
         }
     }
 
     private func performSearch() async {
-        guard !searchQuery.isEmpty else { return }
+        guard !searchText.isEmpty else { return }
 
         isSearching = true
         searchResults = []
 
         do {
-            searchResults = try await searchBook(query: searchQuery)
+            searchResults = try await searchBook(query: searchText)
             isSearching = false
         } catch {
             errorMessage = error.localizedDescription
@@ -156,9 +221,7 @@ struct BookSearchResultsView: View {
 
             return try articles.array().map { element in
                 let title = try element.select("h1.main-title.title a").text()
-
                 let url = try element.select("h1.main-title.title a").attr("href")
-
                 let imageStyle = try element.select(".featured-image .thumb span.fullimage").first()?.attr("style") ?? ""
                 let imageUrl = imageStyle.replacingOccurrences(of: "background-image: url(", with: "")
                     .replacingOccurrences(of: ");", with: "")
@@ -172,7 +235,8 @@ struct BookSearchResultsView: View {
     NavigationView {
         BookSearchResultsView(
             searchQuery: "percy jackson",
-            isSearchFieldFocused: false
+            isSearchFieldFocused: false,
+            shouldPerformSearch: .constant(true)
         )
     }
 }

@@ -14,19 +14,17 @@ import SafariUI
 struct ContentView: View {
     @State private var searchText = ""
     @State private var searchResults: [(title: String, url: String)] = []
-    @State private var autoCompleteResults: [OpenLibraryBook] = []
     @State private var selectedBook: OpenLibraryBook?
     @State private var isSearching = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var siteStatus = SiteStatus()
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var isAutocompleting = false
-    @State private var autocompleteTask: Task<Void, Never>?
     @State private var shouldPerformSearch = false
     @Default(.searchHistory) private var searchHistory
     @State private var showDownloadManager = false
     @State private var showGitHub = false
+    @StateObject private var autocompleteManager = AutocompleteManager()
 
     var body: some View {
         NavigationStack {
@@ -38,17 +36,19 @@ struct ContentView: View {
                         hideKeyboard()
                     }
 
-                VStack(spacing: 0) {
-                    if isSearchFieldFocused, !autoCompleteResults.isEmpty {
-                        AutocompleteView(books: autoCompleteResults) { book in
-                            handleAutocompleteTap(book)
-                        }
-                    } else {
+                GeometryReader { geometry in
+                    VStack(spacing: 20) {
                         Spacer()
+                            .frame(height: geometry.size.height * 0.03)
+                        
                         VStack(spacing: 20) {
-                            Image(systemName: "headphones.circle.fill")
-                                .font(.system(size: 60))
-                                .foregroundStyle(.tint)
+                            if let appIcon = AppIconProvider.appIcon() {
+                                Image(uiImage: appIcon)
+                                    .resizable()
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(Circle())
+                                    .foregroundStyle(.tint)
+                            }
 
                             SiteStatusView(siteStatus: siteStatus)
 
@@ -64,8 +64,19 @@ struct ContentView: View {
                                 )
                             }
                         }
+                        .frame(maxWidth: .infinity)
+                        
                         Spacer()
                     }
+                }
+                .zIndex(0)
+                .ignoresSafeArea(.keyboard)
+
+                if isSearchFieldFocused, !searchText.isEmpty, !autocompleteManager.results.isEmpty {
+                    AutocompleteView(books: autocompleteManager.results) { book in
+                        handleAutocompleteTap(book)
+                    }
+                    .zIndex(1)
                 }
 
                 VStack {
@@ -76,35 +87,32 @@ struct ContentView: View {
                     SearchBar(
                         text: $searchText,
                         onClear: {
-                            withAnimation {
-                                searchText = ""
-                                searchResults = []
-                                autoCompleteResults = []
-                                isSearching = false
-                                isSearchFieldFocused = false
-                                shouldPerformSearch = false
-                            }
+                            searchText = ""
+                            NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
                         },
-                        onSubmit: {
-                            isSearchFieldFocused = false
-                            autoCompleteResults = []
-                            performSearch()
-                        },
+                        onSubmit: submitSearch,
                         showDownloadManager: {
                             showDownloadManager = true
                         },
-                        isLoading: isAutocompleting
+                        isLoading: autocompleteManager.isLoading
                     )
                     .focused($isSearchFieldFocused)
                     .padding(.bottom, 8)
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: isSearchFieldFocused)
+                .zIndex(2)
             }
             .navigationDestination(isPresented: $shouldPerformSearch) {
                 BookSearchResultsView(
                     searchQuery: searchText,
-                    isSearchFieldFocused: isSearchFieldFocused
+                    isSearchFieldFocused: false,
+                    shouldPerformSearch: $shouldPerformSearch
                 )
+                .onDisappear {
+                    if !shouldPerformSearch {
+                        clearSearch()
+                    }
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -120,29 +128,27 @@ struct ContentView: View {
                 SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
                     .ignoresSafeArea()
             }
-            .onChange(of: searchText) { _, _ in
-                autocompleteTask?.cancel()
-
+            .onChange(of: searchText) { _, newValue in
                 if !isSearchFieldFocused {
+                    autocompleteManager.clearResults()
                     return
                 }
 
-                if searchText.count < 2 {
-                    withAnimation {
-                        autoCompleteResults = []
-                        isAutocompleting = false
-                    }
+                if newValue.isEmpty {
+                    autocompleteManager.clearResults()
                     return
                 }
 
-                isAutocompleting = true
-                autocompleteTask = Task(priority: .userInitiated) {
-                    await performAutocomplete()
+                if newValue.count < 2 {
+                    autocompleteManager.clearResults()
+                    return
                 }
+
+                autocompleteManager.search(query: newValue)
             }
             .onChange(of: isSearchFieldFocused) { _, newValue in
                 if !newValue {
-                    autoCompleteResults = []
+                    autocompleteManager.clearResults()
                 }
             }
             .task {
@@ -153,15 +159,12 @@ struct ContentView: View {
             DownloadManagerView()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ClearSearchState"))) { _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation {
-                    searchText = ""
-                    searchResults = []
-                    autoCompleteResults = []
-                    isSearching = false
-                    isSearchFieldFocused = false
-                    shouldPerformSearch = false
-                }
+            withAnimation {
+                searchText = ""
+                searchResults = []
+                isSearching = false
+                isSearchFieldFocused = false
+                shouldPerformSearch = false
             }
         }
     }
@@ -204,8 +207,6 @@ struct ContentView: View {
 
     func performSearch() {
         guard !searchText.isEmpty else { return }
-
-        shouldPerformSearch = true
         isSearching = true
 
         Task {
@@ -249,44 +250,11 @@ struct ContentView: View {
         }
     }
 
-    func performAutocomplete() async {
-        let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        guard let url = URL(string: "https://openlibrary.org/search.json?q=\(query)&fields=key,title,author_name,first_publish_year,cover_i,publisher,subject&limit=10") else {
-            await MainActor.run { isAutocompleting = false }
-            return
-        }
-
-        do {
-            let config = URLSessionConfiguration.default
-            config.timeoutIntervalForRequest = 5
-            config.timeoutIntervalForResource = 5
-            let session = URLSession(configuration: config)
-
-            let (data, _) = try await session.data(from: url)
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            let docs = json?["docs"] as? [[String: Any]] ?? []
-
-            if !Task.isCancelled {
-                await MainActor.run {
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        autoCompleteResults = docs.map { OpenLibraryBook(from: $0) }
-                    }
-                    isAutocompleting = false
-                }
-            }
-        } catch {
-            await MainActor.run {
-                autoCompleteResults = []
-                isAutocompleting = false
-            }
-        }
-    }
-
     private func handleAutocompleteTap(_ book: OpenLibraryBook) {
         selectedBook = book
         searchText = book.title
         isSearchFieldFocused = false
-        autoCompleteResults = []
+        autocompleteManager.clearResults()
 
         if !searchHistory.contains(where: { $0.id == book.id }) {
             searchHistory.insert(book, at: 0)
@@ -295,6 +263,27 @@ struct ContentView: View {
             }
         }
 
+        shouldPerformSearch = true
+        Task {
+            await MainActor.run {
+                performSearch()
+            }
+        }
+    }
+
+    private func clearSearch() {
+        withAnimation {
+            searchText = ""
+            searchResults = []
+            isSearching = false
+            isSearchFieldFocused = false
+            shouldPerformSearch = false
+        }
+    }
+
+    private func submitSearch() {
+        isSearchFieldFocused = false
+        shouldPerformSearch = true
         performSearch()
     }
 }

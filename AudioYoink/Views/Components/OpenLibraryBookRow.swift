@@ -9,7 +9,7 @@ struct OpenLibraryBookRow: View {
     let genreColors: [Color] = [.blue, .green, .orange, .purple, .pink]
 
     var body: some View {
-        NavigationLink(destination: EmptyView()) {
+        Button(action: action) {
             HStack(spacing: 12) {
                 if let coverUrl = book.coverUrl {
                     KFImage(coverUrl)
@@ -79,8 +79,5 @@ struct OpenLibraryBookRow: View {
             .background(isAutocomplete ? Color(.systemGray6) : Color(.systemBackground))
             .cornerRadius(8)
         }
-        .simultaneousGesture(TapGesture().onEnded {
-            action()
-        })
     }
 }

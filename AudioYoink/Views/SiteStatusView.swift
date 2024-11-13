@@ -29,6 +29,12 @@ struct SiteStatusView: View {
                         ConnectionDetailRow(label: "Speed", value: "\(siteStatus.speed) Mb/s")
                     }
                     .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.secondary.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(.horizontal)
                 }
             }
 
@@ -55,6 +61,12 @@ struct SiteStatusView: View {
                         ConnectionDetailRow(label: "Latency", value: String(format: "%.2fs", siteStatus.mirrorLatency))
                         ConnectionDetailRow(label: "Speed", value: "\(siteStatus.mirrorSpeed) Mb/s")
                     }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(.secondary.opacity(0.3), lineWidth: 1)
+                    )
                     .padding(.horizontal)
                 }
             }
