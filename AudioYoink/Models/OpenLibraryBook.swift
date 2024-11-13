@@ -1,5 +1,5 @@
-import Foundation
 import Defaults
+import Foundation
 
 struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable {
     let id: String
@@ -9,34 +9,34 @@ struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable 
     let coverUrl: URL?
     let publisher: String
     let genres: [String]
-    
+
     init(from doc: [String: Any]) {
-        self.id = (doc["key"] as? String) ?? UUID().uuidString
-        self.title = (doc["title"] as? String)?.trimmingCharacters(in: .whitespaces) ?? "Unknown Title"
-        self.author = (doc["author_name"] as? [String])?.first ?? "Unknown Author"
-        self.year = (doc["first_publish_year"] as? Int) ?? 0
-        
+        id = (doc["key"] as? String) ?? UUID().uuidString
+        title = (doc["title"] as? String)?.trimmingCharacters(in: .whitespaces) ?? "Unknown Title"
+        author = (doc["author_name"] as? [String])?.first ?? "Unknown Author"
+        year = (doc["first_publish_year"] as? Int) ?? 0
+
         if let coverId = doc["cover_i"] as? Int {
-            self.coverUrl = URL(string: "https://covers.openlibrary.org/b/id/\(coverId)-S.jpg")
+            coverUrl = URL(string: "https://covers.openlibrary.org/b/id/\(coverId)-S.jpg")
         } else {
-            self.coverUrl = nil
+            coverUrl = nil
         }
-        
-        self.publisher = (doc["publisher"] as? [String])?.first ?? ""
-        
+
+        publisher = (doc["publisher"] as? [String])?.first ?? ""
+
         if let subjects = doc["subject"] as? [String] {
-            self.genres = subjects
+            genres = subjects
                 .filter { !$0.lowercased().contains("series:") }
                 .map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
         } else {
-            self.genres = []
+            genres = []
         }
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id, title, author, year, coverUrl, publisher, genres
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -47,7 +47,7 @@ struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable 
         publisher = try container.decode(String.self, forKey: .publisher)
         genres = try container.decode([String].self, forKey: .genres)
     }
-    
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
@@ -58,11 +58,11 @@ struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable 
         try container.encode(publisher, forKey: .publisher)
         try container.encode(genres, forKey: .genres)
     }
-    
+
     static func == (lhs: OpenLibraryBook, rhs: OpenLibraryBook) -> Bool {
-        return lhs.id == rhs.id
+        lhs.id == rhs.id
     }
-} 
+}
 
 extension Defaults.Keys {
     static let searchHistory = Key<[OpenLibraryBook]>("searchHistory", default: [])

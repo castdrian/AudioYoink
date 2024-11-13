@@ -1,6 +1,15 @@
 {
-  "originHash" : "8ce8ea3ac82facbce198cd9c6d6a5f2f0dd1768322e635d8f76e04155bcf759a",
+  "originHash" : "fa48344a04def03f7f7d8d993288fff35a606dee23c42b3cd4ae36f9921b0fe1",
   "pins" : [
+    {
+      "identity" : "awesome",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/LiveUI/Awesome",
+      "state" : {
+        "revision" : "40c68d0ca2b143c1118e636518706a4b8332777b",
+        "version" : "2.4.0"
+      }
+    },
     {
       "identity" : "defaults",
       "kind" : "remoteSourceControl",
@@ -17,6 +26,24 @@
       "state" : {
         "revision" : "c0940e241945e6378c01fbd45fd3815579d47ef5",
         "version" : "8.1.0"
+      }
+    },
+    {
+      "identity" : "safariui?tab=readme-ov-file",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vsanthanam/SafariUI?tab=readme-ov-file",
+      "state" : {
+        "revision" : "4ed48177b580e0a8d9e4a59631f04dcb988d3879",
+        "version" : "4.0.0"
+      }
+    },
+    {
+      "identity" : "sddownloadmanager",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SagarSDagdu/SDDownloadManager",
+      "state" : {
+        "revision" : "cecab25676aae43384939c0228aa84cef193e790",
+        "version" : "2.0.0"
       }
     },
     {

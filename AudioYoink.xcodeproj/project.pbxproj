@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1067C52CE373470047E1CA /* SwiftSoup */; };
+		3A5E54722CE4A80800359E6D /* Awesome in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54712CE4A80800359E6D /* Awesome */; };
+		3A5E54752CE4AA0D00359E6D /* SDDownloadManager in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54742CE4AA0D00359E6D /* SDDownloadManager */; };
+		3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54792CE5155B00359E6D /* SafariUI */; };
+		3A5E547C2CE5155B00359E6D /* SafariView in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547B2CE5155B00359E6D /* SafariView */; };
+		3A5E547E2CE5155B00359E6D /* WebAuthentication in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547D2CE5155B00359E6D /* WebAuthentication */; };
 		3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6C39F42CE3DF5F003216F8 /* Kingfisher */; };
 		3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 3AB996E42CE3D1EB00EFD84E /* Defaults */; };
 /* End PBXBuildFile section */
@@ -42,9 +47,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A5E54722CE4A80800359E6D /* Awesome in Frameworks */,
 				3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */,
+				3A5E547C2CE5155B00359E6D /* SafariView in Frameworks */,
+				3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */,
+				3A5E54752CE4AA0D00359E6D /* SDDownloadManager in Frameworks */,
 				3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */,
 				3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */,
+				3A5E547E2CE5155B00359E6D /* WebAuthentication in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +100,11 @@
 				3A1067C52CE373470047E1CA /* SwiftSoup */,
 				3AB996E42CE3D1EB00EFD84E /* Defaults */,
 				3A6C39F42CE3DF5F003216F8 /* Kingfisher */,
+				3A5E54712CE4A80800359E6D /* Awesome */,
+				3A5E54742CE4AA0D00359E6D /* SDDownloadManager */,
+				3A5E54792CE5155B00359E6D /* SafariUI */,
+				3A5E547B2CE5155B00359E6D /* SafariView */,
+				3A5E547D2CE5155B00359E6D /* WebAuthentication */,
 			);
 			productName = AudioYoink;
 			productReference = 3A1067B32CE371520047E1CA /* AudioYoink.app */;
@@ -124,6 +139,9 @@
 				3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				3AB996E32CE3D1EB00EFD84E /* XCRemoteSwiftPackageReference "Defaults" */,
 				3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				3A5E54702CE4A80800359E6D /* XCRemoteSwiftPackageReference "Awesome" */,
+				3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */,
+				3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3A1067B42CE371520047E1CA /* Products */;
@@ -382,6 +400,30 @@
 				minimumVersion = 2.7.6;
 			};
 		};
+		3A5E54702CE4A80800359E6D /* XCRemoteSwiftPackageReference "Awesome" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LiveUI/Awesome";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+		3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SagarSDagdu/SDDownloadManager";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+		3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/vsanthanam/SafariUI?tab=readme-ov-file";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.0;
+			};
+		};
 		3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -405,6 +447,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		3A5E54712CE4A80800359E6D /* Awesome */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A5E54702CE4A80800359E6D /* XCRemoteSwiftPackageReference "Awesome" */;
+			productName = Awesome;
+		};
+		3A5E54742CE4AA0D00359E6D /* SDDownloadManager */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */;
+			productName = SDDownloadManager;
+		};
+		3A5E54792CE5155B00359E6D /* SafariUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */;
+			productName = SafariUI;
+		};
+		3A5E547B2CE5155B00359E6D /* SafariView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */;
+			productName = SafariView;
+		};
+		3A5E547D2CE5155B00359E6D /* WebAuthentication */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */;
+			productName = WebAuthentication;
 		};
 		3A6C39F42CE3DF5F003216F8 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;

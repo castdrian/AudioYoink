@@ -3,7 +3,7 @@ import SwiftUI
 struct AutocompleteView: View {
     let books: [OpenLibraryBook]
     let onSelect: (OpenLibraryBook) -> Void
-    
+
     var body: some View {
         VStack {
             ScrollView {
@@ -21,4 +21,4 @@ struct AutocompleteView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: books)
         .transition(.opacity)
     }
-} 
+}

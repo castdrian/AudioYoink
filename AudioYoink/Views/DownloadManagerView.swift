@@ -3,7 +3,7 @@ import SwiftUI
 struct DownloadManagerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -13,11 +13,11 @@ struct DownloadManagerView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
-                
+
                 TabView(selection: $selectedTab) {
                     ActiveDownloadsView()
                         .tag(0)
-                    
+
                     CompletedDownloadsView()
                         .tag(1)
                 }
@@ -39,11 +39,11 @@ struct DownloadManagerView: View {
 struct ActiveDownloadsView: View {
     var body: some View {
         List {
-            ForEach(0..<3) { _ in
+            ForEach(0 ..< 3) { _ in
                 DownloadItemRow(
                     title: "Sample Book Title",
                     author: "Author Name",
-                    progress: Double.random(in: 0...1),
+                    progress: Double.random(in: 0 ... 1),
                     status: .downloading
                 )
             }
@@ -55,7 +55,7 @@ struct ActiveDownloadsView: View {
 struct CompletedDownloadsView: View {
     var body: some View {
         List {
-            ForEach(0..<5) { _ in
+            ForEach(0 ..< 5) { _ in
                 DownloadItemRow(
                     title: "Sample Book Title",
                     author: "Author Name",
@@ -73,7 +73,7 @@ struct DownloadItemRow: View {
     let author: String
     let progress: Double
     let status: DownloadStatus
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -84,12 +84,12 @@ struct DownloadItemRow: View {
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 statusIcon
             }
-            
+
             if status == .downloading {
                 ProgressView(value: progress)
                     .tint(.accentColor)
@@ -97,7 +97,7 @@ struct DownloadItemRow: View {
         }
         .padding(.vertical, 4)
     }
-    
+
     @ViewBuilder
     var statusIcon: some View {
         switch status {

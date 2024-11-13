@@ -1,27 +1,43 @@
-import SwiftUI
 import SwiftSoup
+import SwiftUI
 
 struct Chapter: Identifiable {
     let id = UUID()
     let name: String
     let url: String
     let duration: String
+    
+    init(name: String, url: String, duration: String) {
+        self.name = name
+        self.url = url
+        
+        if duration.contains(":") {
+            self.duration = duration
+        } else {
+            let seconds = Int(duration) ?? 0
+            let hours = seconds / 3600
+            let minutes = (seconds % 3600) / 60
+            let remainingSeconds = seconds % 60
+            self.duration = String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+        }
+    }
 }
 
 enum NetworkError: Error {
     case invalidURL
     case invalidResponse
     case parsingError
+    case invalidDurationFormat
 }
 
 struct TrackResponse: Codable {
     let name: String
     let chapter_link_dropbox: String
     let duration: String
-    
+
     enum CodingKeys: String, CodingKey {
         case name
-        case chapter_link_dropbox = "chapter_link_dropbox"
+        case chapter_link_dropbox
         case duration
     }
 }
@@ -34,30 +50,33 @@ struct BookDetailView: View {
     @State private var errorMessage = ""
     @State private var showToast = false
     @State private var toastMessage = ""
-    
+
     func fetchChapters(from url: String) async throws -> [Chapter] {
         let htmlDocument = try await downloadHTML(from: url)
         let htmlString = try htmlDocument.outerHtml()
-        
+
         let pattern = #"tracks\s*=\s*(\[[^\]]+\])\s*,[^;]*;"#
-        
+
         if let regex = try? NSRegularExpression(pattern: pattern, options: []),
            let match = regex.firstMatch(in: htmlString, options: [], range: NSRange(location: 0, length: htmlString.utf16.count)),
-           let range = Range(match.range(at: 1), in: htmlString) {
-            
+           let range = Range(match.range(at: 1), in: htmlString)
+        {
             var jsonString = String(htmlString[range])
             jsonString = jsonString.replacingOccurrences(of: "'", with: "\"")
-                                  .replacingOccurrences(of: "\\", with: "")
-                                  .replacingOccurrences(of: ",\n", with: ",")
-                                  .replacingOccurrences(of: "\n", with: "")
-                                  .replacingOccurrences(of: ",,", with: ",")
-            
+                .replacingOccurrences(of: "\\", with: "")
+                .replacingOccurrences(of: ",\n", with: ",")
+                .replacingOccurrences(of: "\n", with: "")
+                .replacingOccurrences(of: ",,", with: ",")
+
             if let jsonData = jsonString.data(using: .utf8) {
                 let decoder = JSONDecoder()
                 do {
                     let tracks = try decoder.decode([TrackResponse].self, from: jsonData)
                     return tracks
-                        .filter { $0.chapter_link_dropbox != "https://file.tokybook.com/upload/welcome-you-to-tokybook.mp3" }
+                        .filter { track in
+                            track.chapter_link_dropbox != "https://file.tokybook.com/upload/welcome-you-to-tokybook.mp3" &&
+                                track.chapter_link_dropbox != "https://freeaudiobooks.top/wp-content/uploads/welcome-to-freeaudiobook-top.mp3"
+                        }
                         .map { track in
                             let duration = track.duration.isEmpty ? "00:00" : track.duration
                             return Chapter(
@@ -74,48 +93,63 @@ struct BookDetailView: View {
         }
         throw NetworkError.parsingError
     }
-    
+
     func downloadHTML(from urlString: String) async throws -> Document {
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         let (data, response) = try await URLSession.shared.data(from: url)
-        
+
         guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+              httpResponse.statusCode == 200
+        else {
             throw NetworkError.invalidResponse
         }
-        
+
         guard let htmlString = String(data: data, encoding: .utf8) else {
             throw NetworkError.parsingError
         }
-        
+
         return try SwiftSoup.parse(htmlString)
     }
-    
+
     func calculateTotalDuration(_ chapters: [Chapter]) -> String {
         let totalSeconds = chapters.reduce(0) { total, chapter in
-            let duration = Double(chapter.duration) ?? 0
-            return total + Int(duration)
+            if chapter.duration.contains(":") {
+                let components = chapter.duration.split(separator: ":")
+                if components.count == 3 {
+                    let hours = Int(components[0]) ?? 0
+                    let minutes = Int(components[1]) ?? 0
+                    let seconds = Int(components[2]) ?? 0
+                    return total + (hours * 3600 + minutes * 60 + seconds)
+                } else if components.count == 2 {
+                    let minutes = Int(components[0]) ?? 0
+                    let seconds = Int(components[1]) ?? 0
+                    return total + (minutes * 60 + seconds)
+                }
+            } else {
+                return total + (Int(chapter.duration) ?? 0)
+            }
+            return total
         }
-        
+
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
-        
+
         if hours > 0 {
             return "\(hours)h \(minutes)m"
         } else {
             return "\(minutes)m"
         }
     }
-    
+
     func formatDuration(_ seconds: Double) -> String {
         let minutes = Int(seconds) / 60
         let remainingSeconds = Int(seconds) % 60
         return "\(minutes):\(String(format: "%02d", remainingSeconds))"
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
@@ -130,7 +164,7 @@ struct BookDetailView: View {
                                     if let duration = Double(chapter.duration) {
                                         toastMessage = "Duration: \(formatDuration(duration))"
                                         showToast = true
-                                        
+
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                             showToast = false
                                         }
@@ -142,7 +176,7 @@ struct BookDetailView: View {
                     .padding(.bottom, 80)
                 }
             }
-            
+
             if showToast {
                 Text(toastMessage)
                     .padding(.horizontal, 16)
@@ -153,8 +187,8 @@ struct BookDetailView: View {
                     .transition(.opacity)
                     .animation(.easeInOut, value: showToast)
             }
-            
-            if !isLoading && !chapters.isEmpty {
+
+            if !isLoading, !chapters.isEmpty {
                 VStack(spacing: 0) {
                     Divider()
                     HStack {
@@ -165,9 +199,9 @@ struct BookDetailView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Button(action: {
                             // Download functionality will go here
                         }) {
@@ -189,7 +223,7 @@ struct BookDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .alert("Error", isPresented: $showError) {
-            Button("OK") { }
+            Button("OK") {}
         } message: {
             Text(errorMessage)
         }
@@ -207,7 +241,7 @@ struct BookDetailView: View {
 
 struct ChapterRow: View {
     let chapter: Chapter
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(chapter.name)
@@ -226,4 +260,4 @@ struct ChapterRow: View {
     NavigationView {
         BookDetailView(url: "https://tokybook.com/he-who-fights-with-monsters-11-a-litrpg-adventure")
     }
-} 
+}

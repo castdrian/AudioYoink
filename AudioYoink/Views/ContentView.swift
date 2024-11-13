@@ -5,9 +5,11 @@
 //  Created by Adrian Castro on 12/11/24.
 //
 
-import SwiftUI
-import SwiftSoup
+import Awesome
 import Defaults
+import SwiftSoup
+import SwiftUI
+import SafariUI
 
 struct ContentView: View {
     @State private var searchText = ""
@@ -24,7 +26,8 @@ struct ContentView: View {
     @State private var shouldPerformSearch = false
     @Default(.searchHistory) private var searchHistory
     @State private var showDownloadManager = false
-    
+    @State private var showGitHub = false
+
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
@@ -34,14 +37,14 @@ struct ContentView: View {
                         isSearchFieldFocused = false
                         hideKeyboard()
                     }
-                
+
                 VStack(spacing: 0) {
                     if shouldPerformSearch || isSearching || !searchResults.isEmpty {
                         BookSearchResultsView(
                             searchQuery: searchText,
                             isSearchFieldFocused: isSearchFieldFocused
                         )
-                    } else if isSearchFieldFocused && !autoCompleteResults.isEmpty {
+                    } else if isSearchFieldFocused, !autoCompleteResults.isEmpty {
                         AutocompleteView(books: autoCompleteResults) { book in
                             handleAutocompleteTap(book)
                         }
@@ -51,9 +54,9 @@ struct ContentView: View {
                             Image(systemName: "headphones.circle.fill")
                                 .font(.system(size: 60))
                                 .foregroundStyle(.tint)
-                            
+
                             SiteStatusView(siteStatus: siteStatus)
-                            
+
                             if !searchHistory.isEmpty {
                                 SearchHistoryView(
                                     searchHistory: searchHistory,
@@ -69,12 +72,12 @@ struct ContentView: View {
                         Spacer()
                     }
                 }
-                
+
                 VStack {
                     if !isSearchFieldFocused {
                         Spacer()
                     }
-                    
+
                     SearchBar(
                         text: $searchText,
                         onClear: {
@@ -102,13 +105,27 @@ struct ContentView: View {
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: isSearchFieldFocused)
             }
-            .onChange(of: searchText) { oldValue, newValue in
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showGitHub = true }) {
+                        Awesome.Brand.github.image
+                            .size(40)
+                            .foregroundColor(.label)
+                    }
+                    .offset(x: 8)
+                }
+            }
+            .sheet(isPresented: $showGitHub) {
+                SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
+                    .ignoresSafeArea()
+            }
+            .onChange(of: searchText) { _, _ in
                 autocompleteTask?.cancel()
-                
+
                 if !isSearchFieldFocused {
                     return
                 }
-                
+
                 if searchText.count < 2 {
                     withAnimation {
                         autoCompleteResults = []
@@ -116,13 +133,13 @@ struct ContentView: View {
                     }
                     return
                 }
-                
+
                 isAutocompleting = true
                 autocompleteTask = Task(priority: .userInitiated) {
                     await performAutocomplete()
                 }
             }
-            .onChange(of: isSearchFieldFocused) { oldValue, newValue in
+            .onChange(of: isSearchFieldFocused) { _, newValue in
                 if !newValue {
                     autoCompleteResults = []
                 }
@@ -135,39 +152,49 @@ struct ContentView: View {
             DownloadManagerView()
         }
     }
-    
+
     func checkSiteStatus() async {
+        async let mainSite = checkSite(url: "https://tokybook.com")
+        async let mirrorSite = checkSite(url: "https://freeaudiobooks.top")
+
+        let (main, mirror) = await (mainSite, mirrorSite)
+
+        await MainActor.run {
+            siteStatus.update(isReachable: main.isReachable,
+                              latency: main.latency,
+                              speed: main.speed)
+            siteStatus.updateMirror(isReachable: mirror.isReachable,
+                                    latency: mirror.latency,
+                                    speed: mirror.speed)
+        }
+    }
+
+    private func checkSite(url: String) async -> (isReachable: Bool, latency: TimeInterval, speed: Double) {
         do {
             let startTime = Date()
-            let (_, response) = try await URLSession.shared.data(from: URL(string: "https://tokybook.com")!)
+            let (_, response) = try await URLSession.shared.data(from: URL(string: url)!)
             let endTime = Date()
-            
+
             let latency = endTime.timeIntervalSince(startTime)
             let httpResponse = response as? HTTPURLResponse
             let bytes = Double(httpResponse?.expectedContentLength ?? 0)
             let megabits = max((bytes * 8) / 1_000_000, 0.1)
             let speed = round((megabits / latency) * 10) / 10
-            
-            await MainActor.run {
-                siteStatus.update(isReachable: httpResponse?.statusCode == 200,
-                                latency: latency,
-                                speed: speed)
-            }
+
+            return (isReachable: httpResponse?.statusCode == 200,
+                    latency: latency,
+                    speed: speed)
         } catch {
-            await MainActor.run {
-                siteStatus.update(isReachable: false,
-                                latency: 0,
-                                speed: 0)
-            }
+            return (isReachable: false, latency: 0, speed: 0)
         }
     }
-    
+
     func performSearch() {
         guard !searchText.isEmpty else { return }
-        
+
         shouldPerformSearch = true
         isSearching = true
-        
+
         Task {
             do {
                 let results = try await searchBook(query: searchText)
@@ -186,22 +213,22 @@ struct ContentView: View {
             }
         }
     }
-    
+
     func searchBook(query: String) async throws -> [(title: String, url: String)] {
         let searchUrl = "https://tokybook.com/?s=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        
+
         guard let url = URL(string: searchUrl) else {
             throw URLError(.badURL)
         }
-        
+
         let (data, _) = try await URLSession.shared.data(from: url)
         guard let html = String(data: data, encoding: .utf8) else {
             throw URLError(.cannotDecodeContentData)
         }
-        
+
         let doc = try SwiftSoup.parse(html)
         let results = try doc.select("h2.entry-title")
-        
+
         return try results.array().map { element in
             let link = try element.select("a").first()
             let title = try link?.text() ?? ""
@@ -209,24 +236,24 @@ struct ContentView: View {
             return (title: title, url: url)
         }
     }
-    
+
     func performAutocomplete() async {
         let query = searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         guard let url = URL(string: "https://openlibrary.org/search.json?q=\(query)&fields=key,title,author_name,first_publish_year,cover_i,publisher,subject&limit=10") else {
             await MainActor.run { isAutocompleting = false }
             return
         }
-        
+
         do {
             let config = URLSessionConfiguration.default
             config.timeoutIntervalForRequest = 5
             config.timeoutIntervalForResource = 5
             let session = URLSession(configuration: config)
-            
+
             let (data, _) = try await session.data(from: url)
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             let docs = json?["docs"] as? [[String: Any]] ?? []
-            
+
             if !Task.isCancelled {
                 await MainActor.run {
                     withAnimation(.easeOut(duration: 0.1)) {
@@ -242,20 +269,20 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private func handleAutocompleteTap(_ book: OpenLibraryBook) {
         selectedBook = book
         searchText = book.title
         isSearchFieldFocused = false
         autoCompleteResults = []
-        
+
         if !searchHistory.contains(where: { $0.id == book.id }) {
             searchHistory.insert(book, at: 0)
             if searchHistory.count > 10 {
                 searchHistory.removeLast()
             }
         }
-        
+
         performSearch()
     }
 }
@@ -266,18 +293,18 @@ struct SearchBar: View {
     let onSubmit: () -> Void
     let showDownloadManager: () -> Void
     let isLoading: Bool
-    
+
     var body: some View {
         HStack(spacing: 12) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-                
+
                 TextField("Search audiobooks...", text: $text)
                     .textFieldStyle(.plain)
                     .submitLabel(.search)
                     .onSubmit(onSubmit)
-                
+
                 if !text.isEmpty {
                     if isLoading {
                         ProgressView()
@@ -298,7 +325,7 @@ struct SearchBar: View {
                     .stroke(Color(.systemGray3), lineWidth: 1)
             )
             .cornerRadius(10)
-            
+
             Button(action: showDownloadManager) {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 32))
@@ -311,7 +338,7 @@ struct SearchBar: View {
 
 struct SearchResultRow: View {
     let title: String
-    
+
     var body: some View {
         HStack {
             Text(title)
@@ -330,7 +357,7 @@ struct SearchResultRow: View {
 struct ConnectionDetailRow: View {
     let label: String
     let value: String
-    
+
     var body: some View {
         HStack {
             Text(label)
@@ -345,9 +372,9 @@ struct ConnectionDetailRow: View {
 extension View {
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                      to: nil,
-                                      from: nil,
-                                      for: nil)
+                                        to: nil,
+                                        from: nil,
+                                        for: nil)
     }
 }
 
