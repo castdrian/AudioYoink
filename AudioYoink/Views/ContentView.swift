@@ -29,7 +29,7 @@ struct ContentView: View {
     @State private var showGitHub = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .bottom) {
                 Color.clear
                     .contentShape(Rectangle())
@@ -39,12 +39,7 @@ struct ContentView: View {
                     }
 
                 VStack(spacing: 0) {
-                    if shouldPerformSearch || isSearching || !searchResults.isEmpty {
-                        BookSearchResultsView(
-                            searchQuery: searchText,
-                            isSearchFieldFocused: isSearchFieldFocused
-                        )
-                    } else if isSearchFieldFocused, !autoCompleteResults.isEmpty {
+                    if isSearchFieldFocused, !autoCompleteResults.isEmpty {
                         AutocompleteView(books: autoCompleteResults) { book in
                             handleAutocompleteTap(book)
                         }
@@ -105,6 +100,12 @@ struct ContentView: View {
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: isSearchFieldFocused)
             }
+            .navigationDestination(isPresented: $shouldPerformSearch) {
+                BookSearchResultsView(
+                    searchQuery: searchText,
+                    isSearchFieldFocused: isSearchFieldFocused
+                )
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showGitHub = true }) {
@@ -150,6 +151,18 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showDownloadManager) {
             DownloadManagerView()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ClearSearchState"))) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation {
+                    searchText = ""
+                    searchResults = []
+                    autoCompleteResults = []
+                    isSearching = false
+                    isSearchFieldFocused = false
+                    shouldPerformSearch = false
+                }
+            }
         }
     }
 
@@ -201,7 +214,6 @@ struct ContentView: View {
                 await MainActor.run {
                     searchResults = results
                     isSearching = false
-                    shouldPerformSearch = false
                 }
             } catch {
                 await MainActor.run {

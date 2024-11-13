@@ -1,8 +1,12 @@
 import Kingfisher
+import Awesome
 import SwiftSoup
 import SwiftUI
+import SafariUI
 
 struct BookSearchResultsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
     let searchQuery: String
     @State private var searchResults: [(title: String, url: String, imageUrl: String)] = []
     @State private var isSearching = false
@@ -10,6 +14,7 @@ struct BookSearchResultsView: View {
     @State private var errorMessage = ""
     @State private var selectedSource: BookSource = .tokybook
     let isSearchFieldFocused: Bool
+    @State private var showGitHub = false
 
     var body: some View {
         VStack {
@@ -88,6 +93,23 @@ struct BookSearchResultsView: View {
                 await performSearch()
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showGitHub = true }) {
+                    Awesome.Brand.github.image
+                        .size(40)
+                        .foregroundColor(.label)
+                }
+                .offset(x: 8)
+            }
+        }
+        .sheet(isPresented: $showGitHub) {
+            SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
+                .ignoresSafeArea()
+        }
+        .onDisappear {
+            NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
+        }
     }
 
     private func performSearch() async {
@@ -111,7 +133,6 @@ struct BookSearchResultsView: View {
             ? "https://tokybook.com/?s="
             : "https://freeaudiobooks.top/?s="
         let searchUrl = baseUrl + (query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")
-        print("🔍 Searching URL: \(searchUrl)")
 
         guard let url = URL(string: searchUrl) else {
             throw URLError(.badURL)

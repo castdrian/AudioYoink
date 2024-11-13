@@ -13,12 +13,18 @@ struct Chapter: Identifiable {
         
         if duration.contains(":") {
             self.duration = duration
-        } else {
-            let seconds = Int(duration) ?? 0
+        } else if let seconds = Int(duration) {
             let hours = seconds / 3600
             let minutes = (seconds % 3600) / 60
             let remainingSeconds = seconds % 60
-            self.duration = String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+            
+            if hours > 0 {
+                self.duration = String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
+            } else {
+                self.duration = String(format: "%02d:%02d", minutes, remainingSeconds)
+            }
+        } else {
+            self.duration = "00:00"
         }
     }
 }
@@ -44,12 +50,18 @@ struct TrackResponse: Codable {
 
 struct BookDetailView: View {
     let url: String
+    let source: BookSource?
     @State private var chapters: [Chapter] = []
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showToast = false
     @State private var toastMessage = ""
+
+    init(url: String) {
+        self.url = url
+        self.source = BookSource.fromURL(url)
+    }
 
     func fetchChapters(from url: String) async throws -> [Chapter] {
         let htmlDocument = try await downloadHTML(from: url)
@@ -74,8 +86,7 @@ struct BookDetailView: View {
                     let tracks = try decoder.decode([TrackResponse].self, from: jsonData)
                     return tracks
                         .filter { track in
-                            track.chapter_link_dropbox != "https://file.tokybook.com/upload/welcome-you-to-tokybook.mp3" &&
-                                track.chapter_link_dropbox != "https://freeaudiobooks.top/wp-content/uploads/welcome-to-freeaudiobook-top.mp3"
+                            track.chapter_link_dropbox != source?.skipChapter
                         }
                         .map { track in
                             let duration = track.duration.isEmpty ? "00:00" : track.duration
