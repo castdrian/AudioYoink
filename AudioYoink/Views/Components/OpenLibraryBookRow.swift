@@ -1,11 +1,46 @@
 import Kingfisher
 import SwiftUI
 
+struct LongPressButtonStyle: ButtonStyle {
+    let onLongPress: (() -> Void)?
+    @State private var longPressTask: Task<Void, Never>?
+    @State private var didLongPress = false
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed {
+                    didLongPress = false
+                    longPressTask = Task {
+                        try? await Task.sleep(for: .milliseconds(500))
+                        if !Task.isCancelled {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            didLongPress = true
+                            onLongPress?()
+                        }
+                    }
+                } else {
+                    longPressTask?.cancel()
+                    longPressTask = nil
+                }
+            }
+            .disabled(didLongPress)
+            .onChange(of: didLongPress) { _, _ in
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(100))
+                    didLongPress = false
+                }
+            }
+    }
+}
+
 struct OpenLibraryBookRow: View {
     let book: OpenLibraryBook
     let isAutocomplete: Bool
     let action: () -> Void
-
+    let onLongPress: (() -> Void)?
+    
     let genreColors: [Color] = [.blue, .green, .orange, .purple, .pink]
 
     var body: some View {
@@ -79,5 +114,6 @@ struct OpenLibraryBookRow: View {
             .background(isAutocomplete ? Color(.systemGray6) : Color(.systemBackground))
             .cornerRadius(8)
         }
+        .buttonStyle(LongPressButtonStyle(onLongPress: onLongPress))
     }
 }

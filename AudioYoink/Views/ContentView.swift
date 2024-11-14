@@ -60,6 +60,11 @@ struct ContentView: View {
                                         withAnimation(.easeInOut(duration: 0.3)) {
                                             searchHistory = []
                                         }
+                                    },
+                                    onDelete: { book in
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            searchHistory.removeAll { $0.id == book.id }
+                                        }
                                     }
                                 )
                             }

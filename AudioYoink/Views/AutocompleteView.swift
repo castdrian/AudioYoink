@@ -9,9 +9,12 @@ struct AutocompleteView: View {
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(books) { book in
-                        OpenLibraryBookRow(book: book, isAutocomplete: true) {
-                            onSelect(book)
-                        }
+                        OpenLibraryBookRow(
+                            book: book, 
+                            isAutocomplete: true,
+                            action: { onSelect(book) },
+                            onLongPress: nil
+                        )
                     }
                 }
                 .padding()
