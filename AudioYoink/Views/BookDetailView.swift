@@ -218,7 +218,7 @@ struct BookDetailView: View {
                         }) {
                             HStack {
                                 Image(systemName: "arrow.down.circle.fill")
-                                Text("Download All")
+                                Text("Download")
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
