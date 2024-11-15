@@ -17,7 +17,6 @@ struct BookSearchResultsView: View {
     @State private var errorMessage = ""
     @State private var selectedSource: BookSource = .tokybook
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var showGitHub = false
     @State private var showDownloadManager = false
     @State private var searchText: String = ""
     @StateObject private var autocompleteManager = AutocompleteManager()
@@ -153,20 +152,6 @@ struct BookSearchResultsView: View {
                 await performSearch()
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showGitHub = true }) {
-                    Awesome.Brand.github.image
-                        .size(40)
-                        .foregroundColor(.label)
-                }
-                .offset(x: 8)
-            }
-        }
-        .sheet(isPresented: $showGitHub) {
-            SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
-                .ignoresSafeArea()
-        }
         .sheet(isPresented: $showDownloadManager) {
             DownloadManagerView()
         }
@@ -175,6 +160,7 @@ struct BookSearchResultsView: View {
                 NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
             }
         }
+        .withGitHubButton()
     }
 
     private func performSearch() async {

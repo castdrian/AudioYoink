@@ -23,7 +23,6 @@ struct ContentView: View {
     @State private var shouldPerformSearch = false
     @Default(.searchHistory) private var searchHistory
     @State private var showDownloadManager = false
-    @State private var showGitHub = false
     @StateObject private var autocompleteManager = AutocompleteManager()
 
     var body: some View {
@@ -119,57 +118,21 @@ struct ContentView: View {
                     }
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showGitHub = true }) {
-                        Awesome.Brand.github.image
-                            .size(40)
-                            .foregroundColor(.label)
-                    }
-                    .offset(x: 8)
-                }
-            }
-            .sheet(isPresented: $showGitHub) {
-                SafariView(url: URL(string: "https://github.com/castdrian/AudioYoink")!)
-                    .ignoresSafeArea()
-            }
-            .onChange(of: searchText) { _, newValue in
-                if !isSearchFieldFocused {
-                    autocompleteManager.clearResults()
-                    return
-                }
-
-                if newValue.isEmpty {
-                    autocompleteManager.clearResults()
-                    return
-                }
-
-                if newValue.count < 2 {
-                    autocompleteManager.clearResults()
-                    return
-                }
-
-                autocompleteManager.search(query: newValue)
-            }
-            .onChange(of: isSearchFieldFocused) { _, newValue in
-                if !newValue {
-                    autocompleteManager.clearResults()
-                }
+            .withGitHubButton()
+            .sheet(isPresented: $showDownloadManager) {
+                DownloadManagerView()
             }
             .task {
                 await checkSiteStatus()
             }
-        }
-        .sheet(isPresented: $showDownloadManager) {
-            DownloadManagerView()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ClearSearchState"))) { _ in
-            withAnimation {
-                searchText = ""
-                searchResults = []
-                isSearching = false
-                isSearchFieldFocused = false
-                shouldPerformSearch = false
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ClearSearchState"))) { _ in
+                withAnimation {
+                    searchText = ""
+                    searchResults = []
+                    isSearching = false
+                    isSearchFieldFocused = false
+                    shouldPerformSearch = false
+                }
             }
         }
     }

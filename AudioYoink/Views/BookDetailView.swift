@@ -248,6 +248,7 @@ struct BookDetailView: View {
                 errorMessage = "Failed to fetch chapters: \(error.localizedDescription)"
             }
         }
+        .withGitHubButton()
     }
 }
 
