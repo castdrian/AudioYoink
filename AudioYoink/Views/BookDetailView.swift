@@ -13,10 +13,11 @@ struct Chapter: Identifiable {
         
         if duration.contains(":") {
             self.duration = duration
-        } else if let seconds = Int(duration) {
-            let hours = seconds / 3600
-            let minutes = (seconds % 3600) / 60
-            let remainingSeconds = seconds % 60
+        } else if let seconds = Double(duration) {
+            let totalSeconds = Int(seconds)
+            let hours = totalSeconds / 3600
+            let minutes = (totalSeconds % 3600) / 60
+            let remainingSeconds = totalSeconds % 60
             
             if hours > 0 {
                 self.duration = String(format: "%02d:%02d:%02d", hours, minutes, remainingSeconds)
