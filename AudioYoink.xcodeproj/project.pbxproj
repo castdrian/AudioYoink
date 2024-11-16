@@ -13,15 +13,59 @@
 		3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54792CE5155B00359E6D /* SafariUI */; };
 		3A5E547C2CE5155B00359E6D /* SafariView in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547B2CE5155B00359E6D /* SafariView */; };
 		3A5E547E2CE5155B00359E6D /* WebAuthentication in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547D2CE5155B00359E6D /* WebAuthentication */; };
+		3A5E56852CE9452100359E6D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5E56662CE9443E00359E6D /* WidgetKit.framework */; };
+		3A5E56862CE9452100359E6D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5E56682CE9443E00359E6D /* SwiftUI.framework */; };
+		3A5E56952CE9452200359E6D /* AudioBookDownloadLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3A5E56842CE9452100359E6D /* AudioBookDownloadLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6C39F42CE3DF5F003216F8 /* Kingfisher */; };
 		3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 3AB996E42CE3D1EB00EFD84E /* Defaults */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		3A5E56932CE9452200359E6D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A1067AB2CE371520047E1CA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3A5E56832CE9452100359E6D;
+			remoteInfo = AudioBookDownloadLiveActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3A5E567F2CE9443F00359E6D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3A5E56952CE9452200359E6D /* AudioBookDownloadLiveActivityExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		3A1067B32CE371520047E1CA /* AudioYoink.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioYoink.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A5E56662CE9443E00359E6D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		3A5E56682CE9443E00359E6D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		3A5E56842CE9452100359E6D /* AudioBookDownloadLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AudioBookDownloadLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3A5E56992CE9452200359E6D /* Exceptions for "AudioBookDownloadLiveActivity" folder in "AudioBookDownloadLiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3A5E56832CE9452100359E6D /* AudioBookDownloadLiveActivityExtension */;
+		};
+		3A5E569D2CE9470D00359E6D /* Exceptions for "AudioYoink" folder in "AudioBookDownloadLiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/AudioBookDownloadAttributes.swift,
+			);
+			target = 3A5E56832CE9452100359E6D /* AudioBookDownloadLiveActivityExtension */;
+		};
 		3A6C3A092CE486A6003216F8 /* Exceptions for "AudioYoink" folder in "AudioYoink" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -36,8 +80,17 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				3A6C3A092CE486A6003216F8 /* Exceptions for "AudioYoink" folder in "AudioYoink" target */,
+				3A5E569D2CE9470D00359E6D /* Exceptions for "AudioYoink" folder in "AudioBookDownloadLiveActivityExtension" target */,
 			);
 			path = AudioYoink;
+			sourceTree = "<group>";
+		};
+		3A5E56872CE9452100359E6D /* AudioBookDownloadLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3A5E56992CE9452200359E6D /* Exceptions for "AudioBookDownloadLiveActivity" folder in "AudioBookDownloadLiveActivityExtension" target */,
+			);
+			path = AudioBookDownloadLiveActivity;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -58,6 +111,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3A5E56812CE9452100359E6D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5E56862CE9452100359E6D /* SwiftUI.framework in Frameworks */,
+				3A5E56852CE9452100359E6D /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -65,6 +127,8 @@
 			isa = PBXGroup;
 			children = (
 				3A1067B52CE371520047E1CA /* AudioYoink */,
+				3A5E56872CE9452100359E6D /* AudioBookDownloadLiveActivity */,
+				3A5E56652CE9443E00359E6D /* Frameworks */,
 				3A1067B42CE371520047E1CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,8 +137,18 @@
 			isa = PBXGroup;
 			children = (
 				3A1067B32CE371520047E1CA /* AudioYoink.app */,
+				3A5E56842CE9452100359E6D /* AudioBookDownloadLiveActivityExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3A5E56652CE9443E00359E6D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3A5E56662CE9443E00359E6D /* WidgetKit.framework */,
+				3A5E56682CE9443E00359E6D /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -87,10 +161,12 @@
 				3A1067AF2CE371520047E1CA /* Sources */,
 				3A1067B02CE371520047E1CA /* Frameworks */,
 				3A1067B12CE371520047E1CA /* Resources */,
+				3A5E567F2CE9443F00359E6D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3A5E56942CE9452200359E6D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3A1067B52CE371520047E1CA /* AudioYoink */,
@@ -110,6 +186,28 @@
 			productReference = 3A1067B32CE371520047E1CA /* AudioYoink.app */;
 			productType = "com.apple.product-type.application";
 		};
+		3A5E56832CE9452100359E6D /* AudioBookDownloadLiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3A5E56962CE9452200359E6D /* Build configuration list for PBXNativeTarget "AudioBookDownloadLiveActivityExtension" */;
+			buildPhases = (
+				3A5E56802CE9452100359E6D /* Sources */,
+				3A5E56812CE9452100359E6D /* Frameworks */,
+				3A5E56822CE9452100359E6D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3A5E56872CE9452100359E6D /* AudioBookDownloadLiveActivity */,
+			);
+			name = AudioBookDownloadLiveActivityExtension;
+			packageProductDependencies = (
+			);
+			productName = AudioBookDownloadLiveActivityExtension;
+			productReference = 3A5E56842CE9452100359E6D /* AudioBookDownloadLiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -123,6 +221,9 @@
 					3A1067B22CE371520047E1CA = {
 						CreatedOnToolsVersion = 16.1;
 						LastSwiftMigration = 1610;
+					};
+					3A5E56832CE9452100359E6D = {
+						CreatedOnToolsVersion = 16.1;
 					};
 				};
 			};
@@ -149,12 +250,20 @@
 			projectRoot = "";
 			targets = (
 				3A1067B22CE371520047E1CA /* AudioYoink */,
+				3A5E56832CE9452100359E6D /* AudioBookDownloadLiveActivityExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3A1067B12CE371520047E1CA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5E56822CE9452100359E6D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -171,7 +280,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3A5E56802CE9452100359E6D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3A5E56942CE9452200359E6D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3A5E56832CE9452100359E6D /* AudioBookDownloadLiveActivityExtension */;
+			targetProxy = 3A5E56932CE9452200359E6D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		3A1067BF2CE371540047E1CA /* Debug */ = {
@@ -299,6 +423,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AudioYoink/AudioYoink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
@@ -337,6 +462,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AudioYoink/AudioYoink.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AudioYoink/Preview Content\"";
@@ -368,6 +494,62 @@
 			};
 			name = Release;
 		};
+		3A5E56972CE9452200359E6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L988J7YMK5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AudioBookDownloadLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AudioBookDownloadLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink.AudioBookDownloadLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3A5E56982CE9452200359E6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L988J7YMK5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AudioBookDownloadLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AudioBookDownloadLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.adrian.AudioYoink.AudioBookDownloadLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -385,6 +567,15 @@
 			buildConfigurations = (
 				3A1067C22CE371540047E1CA /* Debug */,
 				3A1067C32CE371540047E1CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3A5E56962CE9452200359E6D /* Build configuration list for PBXNativeTarget "AudioBookDownloadLiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A5E56972CE9452200359E6D /* Debug */,
+				3A5E56982CE9452200359E6D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

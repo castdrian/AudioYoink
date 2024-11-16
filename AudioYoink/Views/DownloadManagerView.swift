@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DownloadManagerView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject var downloadManager: DownloadManager
     @State private var selectedTab = 0
 
     var body: some View {
@@ -15,11 +16,16 @@ struct DownloadManagerView: View {
                 .padding()
 
                 TabView(selection: $selectedTab) {
-                    ActiveDownloadsView()
+                    ActiveDownloadsView(downloads: downloadManager.activeDownloads)
                         .tag(0)
 
-                    CompletedDownloadsView()
-                        .tag(1)
+                    CompletedDownloadsView(
+                        downloads: downloadManager.completedDownloads,
+                        onDelete: { download in
+                            downloadManager.removeCompletedDownload(download)
+                        }
+                    )
+                    .tag(1)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
             }
@@ -36,15 +42,48 @@ struct DownloadManagerView: View {
     }
 }
 
+struct DummyDownloadSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var downloadManager: DownloadManager
+    @State private var title = ""
+    @State private var author = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                TextField("Book Title", text: $title)
+                TextField("Author", text: $author)
+                
+                Button("Start Download") {
+                    downloadManager.startDummyDownload(title: title, author: author)
+                    dismiss()
+                }
+                .disabled(title.isEmpty || author.isEmpty)
+            }
+            .navigationTitle("New Download")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct ActiveDownloadsView: View {
+    let downloads: [DownloadManager.DownloadItem]
+
     var body: some View {
         List {
-            ForEach(0 ..< 3) { _ in
+            ForEach(downloads) { download in
                 DownloadItemRow(
-                    title: "Sample Book Title",
-                    author: "Author Name",
-                    progress: Double.random(in: 0 ... 1),
-                    status: .downloading
+                    title: download.title,
+                    author: download.author,
+                    progress: download.progress,
+                    status: download.status
                 )
             }
         }
@@ -53,15 +92,28 @@ struct ActiveDownloadsView: View {
 }
 
 struct CompletedDownloadsView: View {
+    let downloads: [DownloadManager.DownloadItem]
+    let onDelete: (DownloadManager.DownloadItem) -> Void
+
     var body: some View {
         List {
-            ForEach(0 ..< 5) { _ in
+            ForEach(downloads) { download in
                 DownloadItemRow(
-                    title: "Sample Book Title",
-                    author: "Author Name",
-                    progress: 1.0,
-                    status: .completed
+                    title: download.title,
+                    author: download.author,
+                    progress: download.progress,
+                    status: download.status
                 )
+                .buttonStyle(LongPressButtonStyle(onLongPress: {
+                    onDelete(download)
+                }))
+                .swipeActions {
+                    Button(role: .destructive) {
+                        onDelete(download)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .listStyle(.plain)
@@ -117,5 +169,5 @@ enum DownloadStatus {
 }
 
 #Preview {
-    DownloadManagerView()
+    DownloadManagerView(downloadManager: DownloadManager())
 }

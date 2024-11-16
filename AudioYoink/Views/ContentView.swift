@@ -24,6 +24,7 @@ struct ContentView: View {
     @Default(.searchHistory) private var searchHistory
     @State private var showDownloadManager = false
     @StateObject private var autocompleteManager = AutocompleteManager()
+    @StateObject private var downloadManager = DownloadManager()
 
     var body: some View {
         NavigationStack {
@@ -98,7 +99,8 @@ struct ContentView: View {
                         showDownloadManager: {
                             showDownloadManager = true
                         },
-                        isLoading: autocompleteManager.isLoading
+                        isLoading: autocompleteManager.isLoading,
+                        autocompleteManager: autocompleteManager
                     )
                     .focused($isSearchFieldFocused)
                     .padding(.bottom, 8)
@@ -120,7 +122,7 @@ struct ContentView: View {
             }
             .withGitHubButton()
             .sheet(isPresented: $showDownloadManager) {
-                DownloadManagerView()
+                DownloadManagerView(downloadManager: downloadManager)
             }
             .task {
                 await checkSiteStatus()
@@ -262,39 +264,38 @@ struct SearchBar: View {
     let onSubmit: () -> Void
     let showDownloadManager: () -> Void
     let isLoading: Bool
-
+    @ObservedObject var autocompleteManager: AutocompleteManager
+    
     var body: some View {
         HStack(spacing: 12) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-
+                
                 TextField("Search audiobooks...", text: $text)
                     .textFieldStyle(.plain)
                     .submitLabel(.search)
                     .onSubmit(onSubmit)
-
+                    .onChange(of: text) { _, newValue in
+                        autocompleteManager.search(query: newValue)
+                    }
+                
                 if !text.isEmpty {
-                    if isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                            .padding(.trailing, 4)
-                    } else {
-                        Button(action: onClear) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
-                        }
+                    Button(action: onClear) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
                     }
                 }
+                
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                }
             }
-            .padding(12)
-            .background(Color(.systemBackground))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color(.systemGray3), lineWidth: 1)
-            )
-            .cornerRadius(10)
-
+            .padding(8)
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
+            
             Button(action: showDownloadManager) {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 32))

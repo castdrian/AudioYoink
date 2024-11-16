@@ -58,6 +58,8 @@ struct BookDetailView: View {
     @State private var errorMessage = ""
     @State private var showToast = false
     @State private var toastMessage = ""
+    @StateObject private var downloadManager = DownloadManager()
+    @State private var showDownloadManager = false
 
     init(url: String) {
         self.url = url
@@ -215,7 +217,11 @@ struct BookDetailView: View {
                         Spacer()
 
                         Button(action: {
-                            // Download functionality will go here
+                            downloadManager.startDummyDownload(
+                                title: chapters.first?.name ?? "Unknown Book",
+                                author: "Author"
+                            )
+                            showDownloadManager = true
                         }) {
                             HStack {
                                 Image(systemName: "arrow.down.circle.fill")
@@ -249,6 +255,9 @@ struct BookDetailView: View {
             }
         }
         .withGitHubButton()
+        .sheet(isPresented: $showDownloadManager) {
+            DownloadManagerView(downloadManager: downloadManager)
+        }
     }
 }
 
