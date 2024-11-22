@@ -7,28 +7,28 @@ class LiveActivityManager: ObservableObject {
     @Published var activityId: String?
     @Published var activityToken: String?
     
-    func start(title: String, author: String) {
+    func start(title: String, coverUrl: String?) {
         Task {
             await cancelAllRunningActivities()
-            await startNewLiveActivity(title: title, author: author)
+            await startNewLiveActivity(title: title, coverUrl: coverUrl)
         }
     }
     
-    func update(progress: Double, currentChapter: Int, totalChapters: Int, downloadSpeed: String) {
+    func update(progress: Double, chapterProgress: Double, currentChapter: Int, totalChapters: Int, downloadSpeed: String, chapterDownloadSpeed: String) {
         guard let activityId else { return }
         
+        let contentState = AudioBookDownloadAttributes.ContentState(
+            progress: progress,
+            chapterProgress: chapterProgress,
+            currentChapter: currentChapter,
+            totalChapters: totalChapters,
+            downloadSpeed: downloadSpeed,
+            chapterDownloadSpeed: chapterDownloadSpeed
+        )
+        
         Task {
-            let contentState = AudioBookDownloadAttributes.ContentState(
-                progress: progress,
-                currentChapter: currentChapter,
-                totalChapters: totalChapters,
-                downloadSpeed: downloadSpeed
-            )
-            
-            for activity in Activity<AudioBookDownloadAttributes>.activities {
-                if activity.id == activityId {
-                    await activity.update(ActivityContent(state: contentState, staleDate: nil))
-                }
+            if let activity = Activity<AudioBookDownloadAttributes>.activities.first(where: { $0.id == activityId }) {
+                await activity.update(ActivityContent(state: contentState, staleDate: nil))
             }
         }
     }
@@ -37,9 +37,11 @@ class LiveActivityManager: ObservableObject {
         Task {
             let finalState = AudioBookDownloadAttributes.ContentState(
                 progress: 1.0,
+                chapterProgress: 1.0,
                 currentChapter: 0,
                 totalChapters: 0,
-                downloadSpeed: "Completed"
+                downloadSpeed: "Completed",
+                chapterDownloadSpeed: "Completed"
             )
             
             let finalContent = ActivityContent(state: finalState, staleDate: nil)
@@ -52,17 +54,19 @@ class LiveActivityManager: ObservableObject {
         }
     }
     
-    private func startNewLiveActivity(title: String, author: String) async {
+    private func startNewLiveActivity(title: String, coverUrl: String?) async {
         let attributes = AudioBookDownloadAttributes(
             bookTitle: title,
-            author: author
+            coverUrl: coverUrl
         )
         
         let contentState = AudioBookDownloadAttributes.ContentState(
             progress: 0,
+            chapterProgress: 0,
             currentChapter: 0,
             totalChapters: 10,
-            downloadSpeed: "0 MB/s"
+            downloadSpeed: "0 MB/s",
+            chapterDownloadSpeed: "0 MB/s"
         )
         
         let content = ActivityContent(state: contentState, staleDate: nil)
@@ -84,9 +88,11 @@ class LiveActivityManager: ObservableObject {
     private func cancelAllRunningActivities() async {
         let finalState = AudioBookDownloadAttributes.ContentState(
             progress: 1.0,
+            chapterProgress: 1.0,
             currentChapter: 0,
             totalChapters: 0,
-            downloadSpeed: "Cancelled"
+            downloadSpeed: "Cancelled",
+            chapterDownloadSpeed: "Cancelled"
         )
         
         let finalContent = ActivityContent(state: finalState, staleDate: nil)

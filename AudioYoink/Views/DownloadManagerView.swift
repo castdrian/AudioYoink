@@ -52,10 +52,9 @@ struct DummyDownloadSheet: View {
         NavigationView {
             Form {
                 TextField("Book Title", text: $title)
-                TextField("Author", text: $author)
                 
                 Button("Start Download") {
-                    downloadManager.startDummyDownload(title: title, author: author)
+                    downloadManager.startDummyDownload(title: title)
                     dismiss()
                 }
                 .disabled(title.isEmpty || author.isEmpty)
@@ -81,9 +80,13 @@ struct ActiveDownloadsView: View {
             ForEach(downloads) { download in
                 DownloadItemRow(
                     title: download.title,
-                    author: download.author,
                     progress: download.progress,
-                    status: download.status
+                    chapterProgress: download.chapterProgress,
+                    currentChapter: download.currentChapter,
+                    totalChapters: download.totalChapters,
+                    status: download.status,
+                    downloadSpeed: download.downloadSpeed,
+                    chapterDownloadSpeed: download.chapterDownloadSpeed
                 )
             }
         }
@@ -100,9 +103,13 @@ struct CompletedDownloadsView: View {
             ForEach(downloads) { download in
                 DownloadItemRow(
                     title: download.title,
-                    author: download.author,
                     progress: download.progress,
-                    status: download.status
+                    chapterProgress: download.chapterProgress,
+                    currentChapter: download.currentChapter,
+                    totalChapters: download.totalChapters,
+                    status: download.status,
+                    downloadSpeed: download.downloadSpeed,
+                    chapterDownloadSpeed: download.chapterDownloadSpeed
                 )
                 .buttonStyle(LongPressButtonStyle(onLongPress: {
                     onDelete(download)
@@ -122,34 +129,65 @@ struct CompletedDownloadsView: View {
 
 struct DownloadItemRow: View {
     let title: String
-    let author: String
     let progress: Double
+    let chapterProgress: Double
+    let currentChapter: Int
+    let totalChapters: Int
     let status: DownloadStatus
-
+    let downloadSpeed: String
+    let chapterDownloadSpeed: String
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                    Text(author)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                    if status == .downloading {
+                        Text("Chapter \(currentChapter + 1) of \(totalChapters)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-
+                
                 Spacer()
-
+                
                 statusIcon
             }
-
+            
             if status == .downloading {
-                ProgressView(value: progress)
-                    .tint(.accentColor)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Current Chapter")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(chapterProgress * 100))% • \(chapterDownloadSpeed)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ProgressView(value: chapterProgress)
+                        .tint(.blue)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Overall Progress")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(progress * 100))% • \(downloadSpeed)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ProgressView(value: progress)
+                        .tint(.green)
+                }
             }
         }
         .padding(.vertical, 4)
     }
-
+    
     @ViewBuilder
     var statusIcon: some View {
         switch status {

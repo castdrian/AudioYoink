@@ -52,6 +52,9 @@ struct TrackResponse: Codable {
 struct BookDetailView: View {
     let url: String
     let source: BookSource?
+    let bookTitle: String
+    let coverUrl: String?
+    
     @State private var chapters: [Chapter] = []
     @State private var isLoading = true
     @State private var showError = false
@@ -61,9 +64,11 @@ struct BookDetailView: View {
     @StateObject private var downloadManager = DownloadManager()
     @State private var showDownloadManager = false
 
-    init(url: String) {
+    init(url: String, bookTitle: String, coverUrl: String? = nil) {
         self.url = url
         self.source = BookSource.fromURL(url)
+        self.bookTitle = bookTitle
+        self.coverUrl = coverUrl
     }
 
     func fetchChapters(from url: String) async throws -> [Chapter] {
@@ -218,8 +223,8 @@ struct BookDetailView: View {
 
                         Button(action: {
                             downloadManager.startDummyDownload(
-                                title: chapters.first?.name ?? "Unknown Book",
-                                author: "Author"
+                                title: bookTitle,
+                                coverUrl: coverUrl
                             )
                             showDownloadManager = true
                         }) {
@@ -280,6 +285,10 @@ struct ChapterRow: View {
 
 #Preview {
     NavigationView {
-        BookDetailView(url: "https://tokybook.com/he-who-fights-with-monsters-11-a-litrpg-adventure")
+        BookDetailView(
+            url: "https://tokybook.com/he-who-fights-with-monsters-11-a-litrpg-adventure",
+            bookTitle: "Sample Book",
+            coverUrl: nil
+        )
     }
 }

@@ -60,7 +60,11 @@ struct BookSearchResultsView: View {
                     } else {
                         LazyVStack(spacing: 12) {
                             ForEach(searchResults, id: \.url) { result in
-                                NavigationLink(destination: BookDetailView(url: result.url)) {
+                                NavigationLink(destination: BookDetailView(
+                                    url: result.url,
+                                    bookTitle: result.title,
+                                    coverUrl: result.imageUrl
+                                )) {
                                     HStack(spacing: 12) {
                                         KFImage(URL(string: result.imageUrl))
                                             .placeholder {

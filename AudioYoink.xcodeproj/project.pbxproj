@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1067C52CE373470047E1CA /* SwiftSoup */; };
+		3A1AED742CF0DF23004B850E /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1AED732CF0DF23004B850E /* Kingfisher */; };
 		3A5E54722CE4A80800359E6D /* Awesome in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54712CE4A80800359E6D /* Awesome */; };
 		3A5E54752CE4AA0D00359E6D /* SDDownloadManager in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54742CE4AA0D00359E6D /* SDDownloadManager */; };
 		3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54792CE5155B00359E6D /* SafariUI */; };
@@ -115,6 +116,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A1AED742CF0DF23004B850E /* Kingfisher in Frameworks */,
 				3A5E56862CE9452100359E6D /* SwiftUI.framework in Frameworks */,
 				3A5E56852CE9452100359E6D /* WidgetKit.framework in Frameworks */,
 			);
@@ -203,6 +205,7 @@
 			);
 			name = AudioBookDownloadLiveActivityExtension;
 			packageProductDependencies = (
+				3A1AED732CF0DF23004B850E /* Kingfisher */,
 			);
 			productName = AudioBookDownloadLiveActivityExtension;
 			productReference = 3A5E56842CE9452100359E6D /* AudioBookDownloadLiveActivityExtension.appex */;
@@ -638,6 +641,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A1067C42CE373470047E1CA /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		3A1AED732CF0DF23004B850E /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		3A5E54712CE4A80800359E6D /* Awesome */ = {
 			isa = XCSwiftPackageProductDependency;
