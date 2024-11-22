@@ -61,7 +61,7 @@ struct BookDetailView: View {
     @State private var errorMessage = ""
     @State private var showToast = false
     @State private var toastMessage = ""
-    @StateObject private var downloadManager = DownloadManager()
+    @EnvironmentObject private var downloadManager: DownloadManager
     @State private var showDownloadManager = false
 
     init(url: String, bookTitle: String, coverUrl: String? = nil) {
@@ -222,10 +222,14 @@ struct BookDetailView: View {
                         Spacer()
 
                         Button(action: {
-                            downloadManager.startDummyDownload(
+                            print("Starting download from BookDetailView")
+                            downloadManager.startDownload(
                                 title: bookTitle,
-                                coverUrl: coverUrl
+                                coverUrl: coverUrl,
+                                chapters: chapters,
+                                source: source
                             )
+                            print("Download started, showing download manager")
                             showDownloadManager = true
                         }) {
                             HStack {
@@ -261,7 +265,7 @@ struct BookDetailView: View {
         }
         .withGitHubButton()
         .sheet(isPresented: $showDownloadManager) {
-            DownloadManagerView(downloadManager: downloadManager)
+            DownloadManagerView()
         }
     }
 }

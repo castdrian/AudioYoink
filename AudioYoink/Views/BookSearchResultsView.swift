@@ -21,7 +21,7 @@ struct BookSearchResultsView: View {
     @State private var searchText: String = ""
     @StateObject private var autocompleteManager = AutocompleteManager()
     @State private var shouldDismiss = false
-    @StateObject private var downloadManager = DownloadManager()
+    @EnvironmentObject private var downloadManager: DownloadManager
 
     init(searchQuery: String, isSearchFieldFocused: Bool, shouldPerformSearch: Binding<Bool>) {
         self.searchQuery = searchQuery
@@ -158,7 +158,7 @@ struct BookSearchResultsView: View {
             }
         }
         .sheet(isPresented: $showDownloadManager) {
-            DownloadManagerView(downloadManager: downloadManager)
+            DownloadManagerView()
         }
         .onDisappear {
             if shouldDismiss {

@@ -6,6 +6,7 @@ class LiveActivityManager: ObservableObject {
     static let shared = LiveActivityManager()
     @Published var activityId: String?
     @Published var activityToken: String?
+    private var lastUpdateTime: TimeInterval = 0
     
     func start(title: String, coverUrl: String?) {
         Task {
@@ -15,20 +16,29 @@ class LiveActivityManager: ObservableObject {
     }
     
     func update(progress: Double, chapterProgress: Double, currentChapter: Int, totalChapters: Int, downloadSpeed: String, chapterDownloadSpeed: String) {
-        guard let activityId else { return }
+        guard let activityId = activityId else { return }
         
-        let contentState = AudioBookDownloadAttributes.ContentState(
-            progress: progress,
-            chapterProgress: chapterProgress,
-            currentChapter: currentChapter,
-            totalChapters: totalChapters,
-            downloadSpeed: downloadSpeed,
-            chapterDownloadSpeed: chapterDownloadSpeed
-        )
+        let currentTime = Date().timeIntervalSince1970
+        guard currentTime - lastUpdateTime >= 0.5 else { return }
+        lastUpdateTime = currentTime
         
         Task {
-            if let activity = Activity<AudioBookDownloadAttributes>.activities.first(where: { $0.id == activityId }) {
-                await activity.update(ActivityContent(state: contentState, staleDate: nil))
+            let contentState = AudioBookDownloadAttributes.ContentState(
+                progress: progress,
+                chapterProgress: chapterProgress,
+                currentChapter: currentChapter,
+                totalChapters: totalChapters,
+                downloadSpeed: downloadSpeed,
+                chapterDownloadSpeed: chapterDownloadSpeed
+            )
+            
+            let content = ActivityContent(state: contentState, staleDate: nil)
+            
+            for activity in Activity<AudioBookDownloadAttributes>.activities {
+                if activity.id == activityId {
+                    try? await activity.update(content)
+                    break
+                }
             }
         }
     }

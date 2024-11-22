@@ -10,7 +10,6 @@
 		3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1067C52CE373470047E1CA /* SwiftSoup */; };
 		3A1AED742CF0DF23004B850E /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3A1AED732CF0DF23004B850E /* Kingfisher */; };
 		3A5E54722CE4A80800359E6D /* Awesome in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54712CE4A80800359E6D /* Awesome */; };
-		3A5E54752CE4AA0D00359E6D /* SDDownloadManager in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54742CE4AA0D00359E6D /* SDDownloadManager */; };
 		3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E54792CE5155B00359E6D /* SafariUI */; };
 		3A5E547C2CE5155B00359E6D /* SafariView in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547B2CE5155B00359E6D /* SafariView */; };
 		3A5E547E2CE5155B00359E6D /* WebAuthentication in Frameworks */ = {isa = PBXBuildFile; productRef = 3A5E547D2CE5155B00359E6D /* WebAuthentication */; };
@@ -105,7 +104,6 @@
 				3A6C39F52CE3DF5F003216F8 /* Kingfisher in Frameworks */,
 				3A5E547C2CE5155B00359E6D /* SafariView in Frameworks */,
 				3A5E547A2CE5155B00359E6D /* SafariUI in Frameworks */,
-				3A5E54752CE4AA0D00359E6D /* SDDownloadManager in Frameworks */,
 				3AB996E52CE3D1EB00EFD84E /* Defaults in Frameworks */,
 				3A1067C62CE373470047E1CA /* SwiftSoup in Frameworks */,
 				3A5E547E2CE5155B00359E6D /* WebAuthentication in Frameworks */,
@@ -179,7 +177,6 @@
 				3AB996E42CE3D1EB00EFD84E /* Defaults */,
 				3A6C39F42CE3DF5F003216F8 /* Kingfisher */,
 				3A5E54712CE4A80800359E6D /* Awesome */,
-				3A5E54742CE4AA0D00359E6D /* SDDownloadManager */,
 				3A5E54792CE5155B00359E6D /* SafariUI */,
 				3A5E547B2CE5155B00359E6D /* SafariView */,
 				3A5E547D2CE5155B00359E6D /* WebAuthentication */,
@@ -244,7 +241,6 @@
 				3AB996E32CE3D1EB00EFD84E /* XCRemoteSwiftPackageReference "Defaults" */,
 				3A6C39F32CE3DF5F003216F8 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				3A5E54702CE4A80800359E6D /* XCRemoteSwiftPackageReference "Awesome" */,
-				3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */,
 				3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -436,6 +432,7 @@
 				INFOPLIST_FILE = AudioYoink/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AudioYoink;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -475,6 +472,7 @@
 				INFOPLIST_FILE = AudioYoink/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AudioYoink;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -602,14 +600,6 @@
 				minimumVersion = 2.4.0;
 			};
 		};
-		3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SagarSDagdu/SDDownloadManager";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
 		3A5E54782CE5155B00359E6D /* XCRemoteSwiftPackageReference "SafariUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/vsanthanam/SafariUI?tab=readme-ov-file";
@@ -651,11 +641,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A5E54702CE4A80800359E6D /* XCRemoteSwiftPackageReference "Awesome" */;
 			productName = Awesome;
-		};
-		3A5E54742CE4AA0D00359E6D /* SDDownloadManager */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3A5E54732CE4AA0D00359E6D /* XCRemoteSwiftPackageReference "SDDownloadManager" */;
-			productName = SDDownloadManager;
 		};
 		3A5E54792CE5155B00359E6D /* SafariUI */ = {
 			isa = XCSwiftPackageProductDependency;

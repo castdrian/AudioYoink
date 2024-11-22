@@ -10,6 +10,9 @@ import SwiftUI
 
 @main
 struct AudioYoinkApp: App {
+    @StateObject private var downloadManager = DownloadManager()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     init() {
         KeyboardPreloader.preloadKeyboard(onNextRunloop: true)
 
@@ -28,6 +31,7 @@ struct AudioYoinkApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(downloadManager)
         }
     }
 }

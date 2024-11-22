@@ -1,5 +1,5 @@
 {
-  "originHash" : "fa48344a04def03f7f7d8d993288fff35a606dee23c42b3cd4ae36f9921b0fe1",
+  "originHash" : "2a62cc0336f958ac29b94440105451e62a6fca2779ac6a1e4986aa4109605d1d",
   "pins" : [
     {
       "identity" : "awesome",
@@ -35,15 +35,6 @@
       "state" : {
         "revision" : "4ed48177b580e0a8d9e4a59631f04dcb988d3879",
         "version" : "4.0.0"
-      }
-    },
-    {
-      "identity" : "sddownloadmanager",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SagarSDagdu/SDDownloadManager",
-      "state" : {
-        "revision" : "cecab25676aae43384939c0228aa84cef193e790",
-        "version" : "2.0.0"
       }
     },
     {

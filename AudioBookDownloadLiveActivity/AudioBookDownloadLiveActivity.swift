@@ -63,7 +63,7 @@ struct AudioBookDownloadLiveActivity: Widget {
                                 Text("Overall Progress")
                                     .font(.caption)
                                 Spacer()
-                                Text("\(Int(context.state.progress * 100))% • \(context.state.downloadSpeed)")
+                                Text("\(Int(context.state.progress * 100))%")
                                     .font(.caption)
                             }
                             ProgressView(value: context.state.progress)
@@ -156,7 +156,7 @@ struct LiveActivityView: View {
                         Text("Overall Progress")
                             .font(.caption)
                         Spacer()
-                        Text("\(Int(progress * 100))% • \(downloadSpeed)")
+                        Text("\(Int(progress * 100))%")
                             .font(.caption)
                     }
                     ProgressView(value: progress)

@@ -24,7 +24,7 @@ struct ContentView: View {
     @Default(.searchHistory) private var searchHistory
     @State private var showDownloadManager = false
     @StateObject private var autocompleteManager = AutocompleteManager()
-    @StateObject private var downloadManager = DownloadManager()
+	@EnvironmentObject private var downloadManager: DownloadManager
 
     var body: some View {
         NavigationStack {
@@ -122,7 +122,7 @@ struct ContentView: View {
             }
             .withGitHubButton()
             .sheet(isPresented: $showDownloadManager) {
-                DownloadManagerView(downloadManager: downloadManager)
+                DownloadManagerView()
             }
             .task {
                 await checkSiteStatus()
