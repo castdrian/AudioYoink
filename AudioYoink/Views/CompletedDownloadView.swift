@@ -5,35 +5,33 @@ struct CompletedDownloadView: View {
     let download: DownloadItem
     
     var body: some View {
-        Button {
-            UIApplication.shared.open(download.directory)
-        } label: {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
                 if let coverUrl = download.coverUrl {
                     KFImage(URL(string: coverUrl))
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 60, height: 60)
+                        .frame(width: 50, height: 50)
                         .cornerRadius(8)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(download.title)
-                        .font(.headline)
-                        .lineLimit(1)
-                    
+                        .font(.system(size: 16, weight: .medium))
                     Text("\(download.totalChapters) chapters • \(formatDuration(download.duration))")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
                 
-                Image(systemName: "folder")
-                    .foregroundColor(.accentColor)
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
             }
-            .padding()
-            .background(Color(.systemBackground))
+        }
+        .padding(.vertical, 4)
+        .onTapGesture {
+            openDocuments()
         }
     }
     
@@ -42,5 +40,14 @@ struct CompletedDownloadView: View {
         formatter.allowedUnits = [.hour, .minute]
         formatter.unitsStyle = .abbreviated
         return formatter.string(from: duration) ?? ""
+    }
+    
+    private func openDocuments() {
+        let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        if let sharedUrl = URL(string: "shareddocuments://\(documentsUrl.path)") {
+            if UIApplication.shared.canOpenURL(sharedUrl) {
+                UIApplication.shared.open(sharedUrl, options: [:], completionHandler: nil)
+            }
+        }
     }
 } 

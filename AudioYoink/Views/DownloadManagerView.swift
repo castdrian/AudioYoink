@@ -1,4 +1,5 @@
 import SwiftUI
+import Kingfisher
 
 struct DownloadManagerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -12,6 +13,7 @@ struct DownloadManagerView: View {
                         ForEach(downloadManager.activeDownloads) { download in
                             DownloadItemRow(
                                 title: download.title,
+                                coverUrl: download.coverUrl,
                                 progress: download.progress,
                                 chapterProgress: download.chapterProgress,
                                 currentChapter: download.currentChapter,
@@ -61,6 +63,7 @@ struct DownloadManagerView: View {
 
 struct DownloadItemRow: View {
     let title: String
+    let coverUrl: String?
     let progress: Double
     let chapterProgress: Double
     let currentChapter: Int
@@ -72,6 +75,14 @@ struct DownloadItemRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                if let coverUrl = coverUrl {
+                    KFImage(URL(string: coverUrl))
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .cornerRadius(8)
+                }
+                
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
