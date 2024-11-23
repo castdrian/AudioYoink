@@ -36,7 +36,7 @@ class LiveActivityManager: ObservableObject {
             
             for activity in Activity<AudioBookDownloadAttributes>.activities {
                 if activity.id == activityId {
-                    try? await activity.update(content)
+                    await activity.update(content)
                     break
                 }
             }

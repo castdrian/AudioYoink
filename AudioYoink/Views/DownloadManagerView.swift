@@ -32,25 +32,16 @@ struct DownloadManagerView: View {
                 }
                 
                 if !downloadManager.completedDownloads.isEmpty {
-                    Section("Completed Downloads") {
+                    Section("Completed") {
                         ForEach(downloadManager.completedDownloads) { download in
-                            DownloadItemRow(
-                                title: download.title,
-                                progress: download.progress,
-                                chapterProgress: download.chapterProgress,
-                                currentChapter: download.currentChapter,
-                                totalChapters: download.totalChapters,
-                                status: download.status,
-                                downloadSpeed: download.downloadSpeed,
-                                chapterDownloadSpeed: download.chapterDownloadSpeed
-                            )
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    downloadManager.removeCompletedDownload(download)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
+                            CompletedDownloadView(download: download)
+                                .swipeActions {
+                                    Button(role: .destructive) {
+                                        downloadManager.removeCompletedDownload(download)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
-                            }
                         }
                     }
                 }
@@ -84,7 +75,11 @@ struct DownloadItemRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                    if status == .downloading {
+                    if case .failed(let message) = status {
+                        Text(message)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else if status == .downloading {
                         Text("Chapter \(currentChapter) of \(totalChapters)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -136,6 +131,9 @@ struct DownloadItemRow: View {
         case .completed:
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.green)
+        case .failed:
+            Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
         }
     }
 }

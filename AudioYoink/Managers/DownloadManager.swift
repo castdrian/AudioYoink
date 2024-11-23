@@ -2,11 +2,20 @@ import Foundation
 import ActivityKit
 import SwiftUI
 import Kingfisher
+import Defaults
+
+extension Defaults.Keys {
+    static let completedDownloads = Key<[DownloadItem]>("completedDownloads", default: [])
+}
 
 @MainActor
 class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
     @Published var activeDownloads: [DownloadItem] = []
-    @Published var completedDownloads: [DownloadItem] = []
+    @Published var completedDownloads: [DownloadItem] = Defaults[.completedDownloads] {
+        didSet {
+            Defaults[.completedDownloads] = completedDownloads
+        }
+    }
     private var downloadTasks: [UUID: URLSessionDownloadTask] = [:]
     private lazy var urlSession: URLSession = {
         let config = URLSessionConfiguration.background(withIdentifier: "com.audioyoink.download")
@@ -35,6 +44,21 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
             let chapterSizes = filteredChapters.map { _ in Double.random(in: 20...50) }
             print("Created chapter sizes array")
             
+            let totalDuration = filteredChapters.reduce(0) { total, chapter in 
+                let components = chapter.duration.split(separator: ":")
+                if components.count == 3 {
+                    let hours = Int(components[0]) ?? 0
+                    let minutes = Int(components[1]) ?? 0
+                    let seconds = Int(components[2]) ?? 0
+                    return total + (hours * 3600 + minutes * 60 + seconds)
+                } else if components.count == 2 {
+                    let minutes = Int(components[0]) ?? 0
+                    let seconds = Int(components[1]) ?? 0
+                    return total + (minutes * 60 + seconds)
+                }
+                return total
+            }
+            
             let download = DownloadItem(
                 title: title,
                 coverUrl: coverUrl,
@@ -45,13 +69,16 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 totalChapters: filteredChapters.count,
                 chapterSizes: chapterSizes,
                 downloadSpeed: "0 MB/s",
-                chapterDownloadSpeed: "0 MB/s"
+                chapterDownloadSpeed: "0 MB/s",
+                directory: bookDirectory,
+                duration: TimeInterval(totalDuration),
+                completedDate: nil
             )
             print("Created download item with ID: \(download.id)")
             
             activeDownloads.append(download)
             print("Active downloads count: \(activeDownloads.count)")
-            // LiveActivityManager.shared.start(title: title, coverUrl: coverUrl)
+            LiveActivityManager.shared.start(title: title, coverUrl: coverUrl)
             
             downloadInfo[download.id] = (chapters: filteredChapters, directory: bookDirectory, source: source)
             downloadChapter(for: download, chapters: filteredChapters, directory: bookDirectory, source: source)
@@ -104,60 +131,25 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
             return
         }
         
-        Task {
-            do {
-                let (_, response) = try await URLSession.shared.data(from: url)
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
-                    print("Invalid response for URL: \(url)")
-                    let newAttemptedUrls = attemptedUrls + [nextUrl]
-                    downloadWithFallback(
-                        chapter: chapter,
-                        directory: directory,
-                        download: download,
-                        chapters: chapters,
-                        source: source,
-                        attemptedUrls: newAttemptedUrls
-                    )
-                    return
-                }
-                
-                print("URL is valid, creating download task")
-                let task = urlSession.downloadTask(with: url)
-                downloadTasks[download.id] = task
-                print("Starting download task")
-                task.resume()
-            } catch {
-                print("Error validating URL: \(error)")
-                let newAttemptedUrls = attemptedUrls + [nextUrl]
-                downloadWithFallback(
-                    chapter: chapter,
-                    directory: directory,
-                    download: download,
-                    chapters: chapters,
-                    source: source,
-                    attemptedUrls: newAttemptedUrls
-                )
-            }
-        }
+        print("Starting download task for URL: \(url)")
+        let task = urlSession.downloadTask(with: url)
+        downloadTasks[download.id] = task
+        task.resume()
     }
     
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         print("Download finished for task: \(downloadTask)")
         
-        Task { @MainActor in
-            guard let downloadId = downloadTasks.first(where: { $0.value == downloadTask })?.key else {
-                print("Could not find download ID for task")
-                return
-            }
+        do {
+            let fileHandle = try FileHandle(forReadingFrom: location)
+            let fileData = fileHandle.readDataToEndOfFile()
+            fileHandle.closeFile()
             
-            do {
-                let fileHandle = try FileHandle(forReadingFrom: location)
-                let data = fileHandle.readDataToEndOfFile()
-                fileHandle.closeFile()
-                
-                guard let downloadIndex = activeDownloads.firstIndex(where: { $0.id == downloadId }),
+            Task { @MainActor in
+                guard let downloadId = downloadTasks.first(where: { $0.value == downloadTask })?.key,
+                      let downloadIndex = activeDownloads.firstIndex(where: { $0.id == downloadId }),
                       let info = downloadInfo[downloadId] else {
+                    print("Could not find download info")
                     return
                 }
                 
@@ -167,31 +159,45 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
                     .replacingOccurrences(of: "/", with: "-")
                     .replacingOccurrences(of: ":", with: "-")
                 
-                do {
-                    let fileManager = FileManager.default
-                    let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                    let bookPath = documentsPath.appendingPathComponent(download.title)
-                    
-                    try fileManager.createDirectory(at: bookPath, withIntermediateDirectories: true, attributes: nil)
-                    let destinationURL = bookPath.appendingPathComponent(fileName)
-                    
-                    if fileManager.fileExists(atPath: destinationURL.path) {
-                        try fileManager.removeItem(at: destinationURL)
+                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let bookPath = documentsPath.appendingPathComponent(download.title)
+                let destinationURL = bookPath.appendingPathComponent(fileName)
+                
+                startNextChapter(for: download, at: downloadIndex)
+                
+                Task.detached {
+                    do {
+                        let fileManager = FileManager.default
+                        try fileManager.createDirectory(at: bookPath, withIntermediateDirectories: true, attributes: nil)
+                        
+                        if fileManager.fileExists(atPath: destinationURL.path) {
+                            try fileManager.removeItem(at: destinationURL)
+                        }
+                        
+                        fileManager.createFile(atPath: destinationURL.path, contents: fileData, attributes: nil)
+                        print("Successfully saved file to: \(destinationURL.path)")
+                    } catch {
+                        print("Failed to save file: \(error)")
+                        Task { @MainActor in
+                            self.handleFailedSave(downloadId: downloadId, downloadIndex: downloadIndex, download: download, chapter: chapter)
+                        }
                     }
-                    
-                    fileManager.createFile(atPath: destinationURL.path, contents: data, attributes: nil)
-                    print("Successfully saved file to: \(destinationURL.path)")
-                    
-                    startNextChapter(for: download, at: downloadIndex)
-                } catch {
-                    print("Failed to save file: \(error)")
-                    handleDownloadError(downloadId: downloadId, downloadTask: downloadTask, error: error)
                 }
-            } catch {
-                print("Failed to read downloaded file: \(error)")
-                handleDownloadError(downloadId: downloadId, downloadTask: downloadTask, error: error)
             }
+        } catch {
+            print("Failed to read temporary file: \(error)")
         }
+    }
+    
+    @MainActor
+    private func handleFailedSave(downloadId: UUID, downloadIndex: Int, download: DownloadItem, chapter: Chapter) {
+        print("Failed to save file")
+        var failedDownload = download
+        failedDownload.status = .failed("Failed to save chapter \(chapter.name)")
+        activeDownloads[downloadIndex] = failedDownload
+        downloadTasks[downloadId] = nil
+        downloadInfo[downloadId] = nil
+        LiveActivityManager.shared.end()
     }
     
     @MainActor
@@ -203,7 +209,7 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
             return
         }
         
-        let download = activeDownloads[index]
+        var download = activeDownloads[index]
         let chapter = info.chapters[download.currentChapter - 1]
         let attemptedUrl = downloadTask.originalRequest?.url?.absoluteString ?? ""
         
@@ -217,8 +223,11 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 attemptedUrls: [attemptedUrl]
             )
         } else {
-            print("All URLs failed for chapter \(chapter.name), skipping to next chapter")
-            startNextChapter(for: download, at: index)
+            download.status = .failed("Failed to download chapter \(chapter.name)")
+            activeDownloads[index] = download
+            downloadTasks[download.id] = nil
+            downloadInfo[download.id] = nil
+            LiveActivityManager.shared.end()
         }
     }
     
@@ -308,6 +317,7 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
             completedDownload.status = .completed
             completedDownload.progress = 1.0
             completedDownload.chapterProgress = 1.0
+            completedDownload.completedDate = Date()
             completedDownloads.append(completedDownload)
         }
         downloadTasks[download.id] = nil
