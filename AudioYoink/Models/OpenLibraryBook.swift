@@ -26,8 +26,30 @@ struct OpenLibraryBook: Identifiable, Equatable, Codable, Defaults.Serializable 
 
         if let subjects = doc["subject"] as? [String] {
             genres = subjects
-                .filter { !$0.lowercased().contains("series:") }
-                .map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
+                .filter { 
+                    let lowercased = $0.lowercased()
+                    return !lowercased.contains("series:") && 
+                           !lowercased.contains("serie:") &&
+                           !lowercased.hasPrefix("series") &&
+                           !lowercased.hasPrefix("serie") &&
+                           !lowercased.contains("saga:") &&
+                           !lowercased.hasPrefix("saga")
+                }
+                .map { 
+                    var cleaned = $0.replacingOccurrences(of: "_", with: " ")
+                    
+                    // Remove common prefixes
+                    let prefixes = ["Serie:", "Series:", "Saga:", "Collection:", "Série:"]
+                    for prefix in prefixes {
+                        if cleaned.hasPrefix(prefix) {
+                            cleaned = String(cleaned.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                            break
+                        }
+                    }
+                    
+                    return cleaned.capitalized
+                }
+                .filter { !$0.isEmpty }
         } else {
             genres = []
         }

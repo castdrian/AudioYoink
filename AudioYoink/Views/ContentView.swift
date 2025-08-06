@@ -25,29 +25,46 @@ struct ContentView: View {
     @State private var showDownloadManager = false
     @StateObject private var autocompleteManager = AutocompleteManager()
 	@EnvironmentObject private var downloadManager: DownloadManager
+    @Namespace private var glassNamespace
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
+                // Background with subtle gradient
+                LinearGradient(
+                    colors: [
+                        Color(.systemBackground),
+                        Color(.systemBackground).opacity(0.95),
+                        Color(.systemGray6).opacity(0.3)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         isSearchFieldFocused = false
                         hideKeyboard()
                     }
+                }
 
                 GeometryReader { geometry in
-                    VStack(spacing: 20) {
+                    VStack(spacing: 24) {
                         Spacer()
-                            .frame(height: geometry.size.height * 0.03)
+                            .frame(height: geometry.size.height * 0.05)
                         
-                        VStack(spacing: 20) {
+                        VStack(spacing: 28) {
+                            // App Icon with Liquid Glass
                             if let appIcon = AppIconProvider.appIcon() {
                                 Image(uiImage: appIcon)
                                     .resizable()
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(Circle())
-                                    .foregroundStyle(.tint)
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                                    .shadow(color: .primary.opacity(0.1), radius: 8, y: 4)
+                                    .scaleEffect(1.0)
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: false)
                             }
 
                             SiteStatusView(siteStatus: siteStatus)
@@ -57,12 +74,12 @@ struct ContentView: View {
                                     searchHistory: searchHistory,
                                     onTap: handleAutocompleteTap,
                                     onClear: {
-                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                                             searchHistory = []
                                         }
                                     },
                                     onDelete: { book in
-                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                                             searchHistory.removeAll { $0.id == book.id }
                                         }
                                     }
@@ -92,20 +109,23 @@ struct ContentView: View {
                     SearchBar(
                         text: $searchText,
                         onClear: {
-                            searchText = ""
-                            NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                searchText = ""
+                                NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
+                            }
                         },
                         onSubmit: submitSearch,
                         showDownloadManager: {
                             showDownloadManager = true
                         },
                         isLoading: autocompleteManager.isLoading,
-                        autocompleteManager: autocompleteManager
+                        autocompleteManager: autocompleteManager,
+                        glassNamespace: glassNamespace
                     )
                     .focused($isSearchFieldFocused)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, isSearchFieldFocused ? 16 : 8)
                 }
-                .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0.1), value: isSearchFieldFocused)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isSearchFieldFocused)
                 .zIndex(2)
             }
             .navigationDestination(isPresented: $shouldPerformSearch) {
@@ -265,44 +285,60 @@ struct SearchBar: View {
     let showDownloadManager: () -> Void
     let isLoading: Bool
     @ObservedObject var autocompleteManager: AutocompleteManager
+    let glassNamespace: Namespace.ID
     
     var body: some View {
-        HStack(spacing: 12) {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                
-                TextField("Search audiobooks...", text: $text)
-                    .textFieldStyle(.plain)
-                    .submitLabel(.search)
-                    .onSubmit(onSubmit)
-                    .onChange(of: text) { _, newValue in
-                        autocompleteManager.search(query: newValue)
+        GlassEffectContainer(spacing: 16) {
+            HStack(spacing: 16) {
+                // Search field with liquid glass
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                        .font(.system(size: 18, weight: .medium))
+                    
+                    TextField("Search audiobooks...", text: $text)
+                        .textFieldStyle(.plain)
+                        .submitLabel(.search)
+                        .font(.system(size: 16, weight: .medium))
+                        .onSubmit(onSubmit)
+                        .onChange(of: text) { _, newValue in
+                            autocompleteManager.search(query: newValue)
+                        }
+                    
+                    if !text.isEmpty {
+                        Button(action: onClear) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .font(.system(size: 18, weight: .medium))
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.scale.combined(with: .opacity))
                     }
-                
-                if !text.isEmpty {
-                    Button(action: onClear) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                    
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(.secondary)
+                            .scaleEffect(0.8)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .frame(height: 52)
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
+                .glassEffectID("searchField", in: glassNamespace)
                 
-                if isLoading {
-                    ProgressView()
-                        .controlSize(.small)
+                // Download manager button
+                Button(action: showDownloadManager) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.primary)
                 }
+                .frame(width: 52, height: 52)
+                .glassEffect(.regular.interactive(), in: .circle)
             }
-            .padding(8)
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
-            
-            Button(action: showDownloadManager) {
-                Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.tint)
-            }
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal)
     }
 }
 
@@ -312,15 +348,18 @@ struct SearchResultRow: View {
     var body: some View {
         HStack {
             Text(title)
+                .font(.system(size: 16, weight: .medium))
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
+                .foregroundStyle(.primary)
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.tertiary)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
     }
 }
 
@@ -331,10 +370,12 @@ struct ConnectionDetailRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundColor(.secondary)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .font(.system(.body, design: .monospaced))
+                .font(.system(.body, design: .monospaced, weight: .semibold))
+                .foregroundStyle(.primary)
         }
     }
 }

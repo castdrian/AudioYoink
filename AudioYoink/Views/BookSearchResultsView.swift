@@ -22,6 +22,7 @@ struct BookSearchResultsView: View {
     @StateObject private var autocompleteManager = AutocompleteManager()
     @State private var shouldDismiss = false
     @EnvironmentObject private var downloadManager: DownloadManager
+    @Namespace private var glassNamespace
 
     init(searchQuery: String, isSearchFieldFocused: Bool, shouldPerformSearch: Binding<Bool>) {
         self.searchQuery = searchQuery
@@ -31,72 +32,120 @@ struct BookSearchResultsView: View {
 
     var body: some View {
         ZStack {
-            VStack {
-                Picker("Source", selection: $selectedSource) {
-                    ForEach(BookSource.allCases, id: \.self) { source in
-                        Text(source.rawValue).tag(source)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-
-                ScrollView {
-                    if isSearching {
-                        ProgressView()
-                            .padding()
-                    } else if searchResults.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
-                            Text("No results found")
-                                .font(.headline)
-                            Text("Try adjusting your search or switching sources")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+            // Background with gradient
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color(.systemBackground).opacity(0.95),
+                    Color(.systemGray6).opacity(0.2)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            GlassEffectContainer(spacing: 20) {
+                VStack(spacing: 20) {
+                    // Source picker with glass effect
+                    Picker("Source", selection: $selectedSource) {
+                        ForEach(BookSource.allCases, id: \.self) { source in
+                            Text(source.rawValue).tag(source)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding()
-                    } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(searchResults, id: \.url) { result in
-                                NavigationLink(destination: BookDetailView(
-                                    url: result.url,
-                                    bookTitle: result.title,
-                                    coverUrl: result.imageUrl
-                                )) {
-                                    HStack(spacing: 12) {
-                                        KFImage(URL(string: result.imageUrl))
-                                            .placeholder {
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .fill(Color.gray.opacity(0.3))
-                                            }
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 60, height: 90)
-                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .pickerStyle(.segmented)
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                    .glassEffectID("sourcePicker", in: glassNamespace)
+                    .padding(.horizontal, 20)
 
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(result.title)
-                                                .lineLimit(2)
-                                                .font(.system(size: 16, weight: .medium))
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(8)
+                    ScrollView {
+                        if isSearching {
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .controlSize(.large)
+                                    .tint(.primary)
+                                Text("Searching audiobooks...")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(40)
+                        } else if searchResults.isEmpty {
+                            VStack(spacing: 20) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(.tertiary)
+                                
+                                VStack(spacing: 8) {
+                                    Text("No results found")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Text("Try adjusting your search or switching sources")
+                                        .font(.body)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
                                 }
                             }
+                            .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                            .glassEffectID("emptyState", in: glassNamespace)
+                            .padding(40)
+                        } else {
+                            LazyVStack(spacing: 16) {
+                                ForEach(Array(searchResults.enumerated()), id: \.element.url) { index, result in
+                                    NavigationLink(destination: BookDetailView(
+                                        url: result.url,
+                                        bookTitle: result.title,
+                                        coverUrl: result.imageUrl
+                                    )) {
+                                        HStack(spacing: 16) {
+                                            // Enhanced book cover
+                                            KFImage(URL(string: result.imageUrl))
+                                                .placeholder {
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .fill(.tertiary)
+                                                        .overlay {
+                                                            Image(systemName: "book.closed")
+                                                                .font(.system(size: 20))
+                                                                .foregroundStyle(.secondary)
+                                                        }
+                                                }
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 64, height: 96)
+                                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                                .shadow(color: .primary.opacity(0.1), radius: 6, y: 3)
+
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text(result.title)
+                                                    .lineLimit(3)
+                                                    .font(.system(size: 17, weight: .semibold))
+                                                    .foregroundStyle(.primary)
+                                                    .multilineTextAlignment(.leading)
+                                                
+                                                Spacer()
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundStyle(.tertiary)
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 16)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                                    .glassEffectID("searchResult_\(index)", in: glassNamespace)
+                                }
+                            }
+                            .padding(.horizontal, 20)
                         }
-                        .padding()
                     }
                 }
             }
+            
+            // Autocomplete overlay
             if isSearchFieldFocused, !autocompleteManager.results.isEmpty {
                 AutocompleteView(books: autocompleteManager.results) { book in
                     withAnimation {

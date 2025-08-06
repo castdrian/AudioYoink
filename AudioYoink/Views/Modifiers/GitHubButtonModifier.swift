@@ -11,10 +11,15 @@ struct GitHubButtonModifier: ViewModifier {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showGitHub = true }) {
                         Awesome.Brand.github.image
-                            .size(40)
-                            .foregroundColor(.label)
+                            .size(24)
+                            .foregroundStyle(.primary)
                     }
-                    .offset(x: 8)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(.regularMaterial)
+                    )
+                    .clipShape(Circle())
                 }
             }
             .sheet(isPresented: $showGitHub) {
@@ -28,4 +33,4 @@ extension View {
     func withGitHubButton() -> some View {
         modifier(GitHubButtonModifier())
     }
-} 
+}

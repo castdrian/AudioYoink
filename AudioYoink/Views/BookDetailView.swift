@@ -171,52 +171,90 @@ struct BookDetailView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
-                if isLoading {
-                    ProgressView()
-                        .padding()
-                } else {
-                    LazyVStack(spacing: 8) {
-                        ForEach(chapters) { chapter in
-                            ChapterRow(chapter: chapter)
-                                .onTapGesture {
-                                    if let duration = Double(chapter.duration) {
-                                        toastMessage = "Duration: \(formatDuration(duration))"
-                                        showToast = true
+            // Background with gradient
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color(.systemBackground).opacity(0.95),
+                    Color(.systemGray6).opacity(0.2)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            GlassEffectContainer(spacing: 16) {
+                ScrollView {
+                    if isLoading {
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(.primary)
+                            Text("Loading chapters...")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(40)
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                                ChapterRow(chapter: chapter)
+                                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                                    .glassEffectID("chapter_\(index)", in: Namespace().wrappedValue)
+                                    .onTapGesture {
+                                        if let duration = Double(chapter.duration) {
+                                            toastMessage = "Duration: \(formatDuration(duration))"
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                showToast = true
+                                            }
 
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                            showToast = false
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                    showToast = false
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .padding(.bottom, 120)
                     }
-                    .padding()
-                    .padding(.bottom, 80)
                 }
             }
 
+            // Toast notification with glass effect
             if showToast {
                 Text(toastMessage)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .padding(.bottom, 100)
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: showToast)
+                    .font(.system(size: 15, weight: .medium))
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                    .padding(.bottom, 120)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.9).combined(with: .opacity).combined(with: .move(edge: .bottom)),
+                        removal: .scale(scale: 0.95).combined(with: .opacity)
+                    ))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showToast)
             }
 
+            // Download section with enhanced glass effect
             if !isLoading, !chapters.isEmpty {
                 VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading) {
+                    // Subtle divider
+                    Rectangle()
+                        .fill(.separator.opacity(0.3))
+                        .frame(height: 1)
+                    
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("\(chapters.count) Chapters")
-                                .font(.headline)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.primary)
                             Text("Total Duration: \(calculateTotalDuration(chapters))")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
 
                         Spacer()
@@ -232,19 +270,22 @@ struct BookDetailView: View {
                             print("Download started, showing download manager")
                             showDownloadManager = true
                         }) {
-                            HStack {
+                            HStack(spacing: 8) {
                                 Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
                                 Text("Download")
+                                    .font(.system(size: 16, weight: .semibold))
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
+                            .foregroundStyle(.primary)
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
                     }
-                    .padding()
-                    .background(.background)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 0))
+                    .background(.regularMaterial)
                 }
             }
         }
@@ -274,16 +315,35 @@ struct ChapterRow: View {
     let chapter: Chapter
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(chapter.name)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
+        HStack(spacing: 16) {
+            // Chapter indicator
+            Circle()
+                .fill(.tertiary)
+                .frame(width: 8, height: 8)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text(chapter.name)
+                    .font(.system(size: 16, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .foregroundStyle(.primary)
+                
+                if !chapter.duration.isEmpty && chapter.duration != "00:00" {
+                    Label(chapter.duration, systemImage: "clock")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "play.circle")
+                .font(.system(size: 20))
+                .foregroundStyle(.tertiary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(Color(.systemGray6))
-        .cornerRadius(8)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .contentShape(Rectangle())
     }
 }
 
