@@ -115,15 +115,38 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
         source: BookSource,
         attemptedUrls: [String]
     ) {
-        let urls = [
-            source.mediaURL + chapter.url,
-            source.mediaFallbackURL + chapter.url
-        ].map { url in
-            url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? url
+        // Handle both absolute and relative URLs
+        let urls: [String]
+        if chapter.url.hasPrefix("http") {
+            // Chapter URL is already absolute, use as-is
+            urls = [chapter.url]
+            print("Using absolute URL for \(chapter.name): \(chapter.url)")
+        } else {
+            // Chapter URL is relative, construct full URLs with base and fallback
+            urls = [
+                source.mediaURL + chapter.url,
+                source.mediaFallbackURL + chapter.url
+            ]
+            print("Constructed URLs for \(chapter.name): \(urls)")
         }
         
-        print("Attempting URLs: \(urls)")
-        let remainingUrls = urls.filter { !attemptedUrls.contains($0) }
+        // Only encode URLs if they are relative (constructed by us)
+        // Absolute URLs from Golden Audiobook are already properly encoded
+        let encodedUrls: [String]
+        if chapter.url.hasPrefix("http") {
+            // Don't re-encode absolute URLs
+            encodedUrls = urls
+            print("Using URLs without re-encoding: \(encodedUrls)")
+        } else {
+            // Encode relative URLs
+            encodedUrls = urls.map { url in
+                url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? url
+            }
+            print("Encoded relative URLs: \(encodedUrls)")
+        }
+        
+        let remainingUrls = encodedUrls.filter { !attemptedUrls.contains($0) }
+        print("Remaining URLs to try: \(remainingUrls)")
         
         guard let nextUrl = remainingUrls.first,
               let url = URL(string: nextUrl) else {
@@ -144,6 +167,25 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
             let fileHandle = try FileHandle(forReadingFrom: location)
             let fileData = fileHandle.readDataToEndOfFile()
             fileHandle.closeFile()
+            
+            // Check if the downloaded file is too small (likely an error response)
+            let fileSize = fileData.count
+            print("Downloaded file size: \(fileSize) bytes")
+            
+            if fileSize < 1000 { // Less than 1KB suggests an error response
+                print("File too small (\(fileSize) bytes), likely an error response")
+                
+                // Try to parse as text to see what the error is
+                if let errorText = String(data: fileData, encoding: .utf8) {
+                    print("Error response content: \(errorText)")
+                }
+                
+                Task { @MainActor in
+                    guard let downloadId = downloadTasks.first(where: { $0.value == downloadTask })?.key else { return }
+                    handleDownloadError(downloadId: downloadId, downloadTask: downloadTask, error: NSError(domain: "AudioYoink", code: -1, userInfo: [NSLocalizedDescriptionKey: "File too small (\(fileSize) bytes)"]))
+                }
+                return
+            }
             
             Task { @MainActor in
                 guard let downloadId = downloadTasks.first(where: { $0.value == downloadTask })?.key,
@@ -202,18 +244,26 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
     
     @MainActor
     private func handleDownloadError(downloadId: UUID, downloadTask: URLSessionDownloadTask, error: Error) {
+        print("Download error: \(error)")
         downloadTasks[downloadId] = nil
         
         guard let info = downloadInfo[downloadId],
               let index = activeDownloads.firstIndex(where: { $0.id == downloadId }) else {
+            print("Could not find download info for failed download")
             return
         }
         
         var download = activeDownloads[index]
         let chapter = info.chapters[download.currentChapter - 1]
         let attemptedUrl = downloadTask.originalRequest?.url?.absoluteString ?? ""
+        print("Failed URL: \(attemptedUrl)")
         
-        if attemptedUrl.contains(info.source.mediaURL) {
+        // For relative URLs, try fallback if we haven't tried it yet
+        // For absolute URLs, there's no fallback, so fail immediately
+        let shouldRetry = !chapter.url.hasPrefix("http") && !attemptedUrl.contains(info.source.mediaFallbackURL)
+        
+        if shouldRetry {
+            print("Attempting fallback URL for chapter: \(chapter.name)")
             downloadWithFallback(
                 chapter: chapter,
                 directory: info.directory,
@@ -223,7 +273,8 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 attemptedUrls: [attemptedUrl]
             )
         } else {
-            download.status = .failed("Failed to download chapter \(chapter.name)")
+            print("No fallback available, failing download for chapter: \(chapter.name)")
+            download.status = .failed("Failed to download chapter \(chapter.name): \(error.localizedDescription)")
             activeDownloads[index] = download
             downloadTasks[download.id] = nil
             downloadInfo[download.id] = nil
@@ -332,6 +383,16 @@ class DownloadManager: NSObject, ObservableObject, URLSessionDownloadDelegate {
                 return
             }
             backgroundCompletionHandler()
+        }
+    }
+    
+    nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error,
+           let downloadTask = task as? URLSessionDownloadTask {
+            Task { @MainActor in
+                guard let downloadId = downloadTasks.first(where: { $0.value == downloadTask })?.key else { return }
+                handleDownloadError(downloadId: downloadId, downloadTask: downloadTask, error: error)
+            }
         }
     }
 }

@@ -45,8 +45,12 @@ struct CompletedDownloadView: View {
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
                     
-                    Label("\(download.totalChapters) chapters • \(formatDuration(download.duration))", 
-                          systemImage: "waveform")
+                    let durationText = formatDuration(download.duration)
+                    let labelText = download.duration > 0 && !durationText.isEmpty 
+                        ? "\(download.totalChapters) chapters • \(durationText)"
+                        : "\(download.totalChapters) chapters"
+                    
+                    Label(labelText, systemImage: "waveform")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
                 }

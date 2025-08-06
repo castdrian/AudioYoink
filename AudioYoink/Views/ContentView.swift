@@ -162,8 +162,9 @@ struct ContentView: View {
     func checkSiteStatus() async {
         async let mainSite = checkSite(url: "https://tokybook.com")
         async let mirrorSite = checkSite(url: "https://freeaudiobooks.top")
+        async let goldenSite = checkSite(url: "https://goldenaudiobook.net")
 
-        let (main, mirror) = await (mainSite, mirrorSite)
+        let (main, mirror, golden) = await (mainSite, mirrorSite, goldenSite)
 
         await MainActor.run {
             siteStatus.update(isReachable: main.isReachable,
@@ -172,6 +173,9 @@ struct ContentView: View {
             siteStatus.updateMirror(isReachable: mirror.isReachable,
                                     latency: mirror.latency,
                                     speed: mirror.speed)
+            siteStatus.updateGolden(isReachable: golden.isReachable,
+                                    latency: golden.latency,
+                                    speed: golden.speed)
         }
     }
 

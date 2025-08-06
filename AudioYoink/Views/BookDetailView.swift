@@ -11,7 +11,10 @@ struct Chapter: Identifiable {
         self.name = name
         self.url = url
         
-        if duration.contains(":") {
+        // If duration is empty, leave it empty (this will hide duration display)
+        if duration.isEmpty {
+            self.duration = ""
+        } else if duration.contains(":") {
             self.duration = duration
         } else if let seconds = Double(duration) {
             let totalSeconds = Int(seconds)
@@ -25,7 +28,7 @@ struct Chapter: Identifiable {
                 self.duration = String(format: "%02d:%02d", minutes, remainingSeconds)
             }
         } else {
-            self.duration = "00:00"
+            self.duration = ""
         }
     }
 }
@@ -75,6 +78,64 @@ struct BookDetailView: View {
         let htmlDocument = try await downloadHTML(from: url)
         let htmlString = try htmlDocument.outerHtml()
 
+        // Check if this is Golden Audiobook source
+        if let source = source, source == .goldenaudiobook {
+            return try parseGoldenAudiobookChapters(from: htmlDocument)
+        } else {
+            return try parseStandardChapters(from: htmlString)
+        }
+    }
+    
+    private func parseGoldenAudiobookChapters(from document: Document) throws -> [Chapter] {
+        let audioElements = try document.select("audio.wp-audio-shortcode")
+        var chapters: [Chapter] = []
+        
+        print("Golden Audiobook: Found \(audioElements.array().count) audio elements")
+        
+        for (index, audioElement) in audioElements.array().enumerated() {
+            // Get the source element with type="audio/mpeg" 
+            if let sourceElement = try audioElement.select("source[type=\"audio/mpeg\"]").first() {
+                let fullAudioUrl = try sourceElement.attr("src")
+                print("Golden Audiobook: Chapter \(index + 1) full URL: \(fullAudioUrl)")
+                
+                // For Golden Audiobook, use the complete URL as-is since it includes necessary query parameters
+                // and the download manager will detect it's absolute and use it directly
+                let audioUrl = fullAudioUrl
+                print("Golden Audiobook: Using complete URL: \(audioUrl)")
+                
+                // Extract chapter number from URL or use index
+                let chapterName: String
+                if let urlComponents = URLComponents(string: fullAudioUrl),
+                   let path = urlComponents.path.split(separator: "/").last,
+                   let filename = path.split(separator: ".").first {
+                    // Extract chapter number from filename (e.g., "01.mp3" -> "Chapter 1")
+                    let chapterNumber = String(filename).trimmingCharacters(in: CharacterSet.decimalDigits.inverted)
+                    if !chapterNumber.isEmpty {
+                        chapterName = "Chapter \(Int(chapterNumber) ?? (index + 1))"
+                    } else {
+                        chapterName = "Chapter \(index + 1)"
+                    }
+                } else {
+                    chapterName = "Chapter \(index + 1)"
+                }
+                
+                print("Golden Audiobook: Created chapter: \(chapterName) with URL: \(audioUrl)")
+                
+                // Golden Audiobook doesn't provide duration in HTML, so we use empty string to hide duration
+                let chapter = Chapter(
+                    name: chapterName,
+                    url: audioUrl, // Using the complete absolute URL with query parameters
+                    duration: "" // Empty duration will hide the duration display
+                )
+                chapters.append(chapter)
+            }
+        }
+        
+        print("Golden Audiobook: Total chapters parsed: \(chapters.count)")
+        return chapters
+    }
+    
+    private func parseStandardChapters(from htmlString: String) throws -> [Chapter] {
         let pattern = #"tracks\s*=\s*(\[[^\]]+\])\s*,[^;]*;"#
 
         if let regex = try? NSRegularExpression(pattern: pattern, options: []),
@@ -135,6 +196,11 @@ struct BookDetailView: View {
 
     func calculateTotalDuration(_ chapters: [Chapter]) -> String {
         let totalSeconds = chapters.reduce(0) { total, chapter in
+            // Skip empty durations
+            if chapter.duration.isEmpty {
+                return total
+            }
+            
             if chapter.duration.contains(":") {
                 let components = chapter.duration.split(separator: ":")
                 if components.count == 3 {
@@ -151,6 +217,11 @@ struct BookDetailView: View {
                 return total + (Int(chapter.duration) ?? 0)
             }
             return total
+        }
+
+        // If no valid durations found, return empty string to hide total duration
+        if totalSeconds == 0 {
+            return ""
         }
 
         let hours = totalSeconds / 3600
@@ -252,9 +323,12 @@ struct BookDetailView: View {
                             Text("\(chapters.count) Chapters")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(.primary)
-                            Text("Total Duration: \(calculateTotalDuration(chapters))")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(.secondary)
+                            let totalDuration = calculateTotalDuration(chapters)
+                            if !totalDuration.isEmpty {
+                                Text("Total Duration: \(totalDuration)")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                         Spacer()
@@ -280,7 +354,7 @@ struct BookDetailView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
-                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 20)
