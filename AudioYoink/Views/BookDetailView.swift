@@ -11,7 +11,6 @@ struct Chapter: Identifiable {
         self.name = name
         self.url = url
         
-        // If duration is empty, leave it empty (this will hide duration display)
         if duration.isEmpty {
             self.duration = ""
         } else if duration.contains(":") {
@@ -254,66 +253,120 @@ struct BookDetailView: View {
             )
             .ignoresSafeArea()
             
-            GlassEffectContainer(spacing: 16) {
-                ScrollView {
-                    if isLoading {
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .controlSize(.large)
-                                .tint(.primary)
-                            Text("Loading chapters...")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(40)
-                    } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
-                                ChapterRow(chapter: chapter)
-                                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-                                    .glassEffectID("chapter_\(index)", in: Namespace().wrappedValue)
-                                    .onTapGesture {
-                                        if let duration = Double(chapter.duration) {
-                                            toastMessage = "Duration: \(formatDuration(duration))"
-                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                                showToast = true
-                                            }
-
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if #available(iOS 26.0, *) {
+                GlassEffectContainer(spacing: 16) {
+                    ScrollView {
+                        if isLoading {
+                            VStack(spacing: 20) {
+                                ProgressView()
+                                    .controlSize(.large)
+                                    .tint(.primary)
+                                Text("Loading chapters...")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(40)
+                        } else {
+                            LazyVStack(spacing: 12) {
+                                ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                                    ChapterRow(chapter: chapter)
+                                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                                        .glassEffectID("chapter_\(index)", in: Namespace().wrappedValue)
+                                        .onTapGesture {
+                                            if let duration = Double(chapter.duration) {
+                                                toastMessage = "Duration: \(formatDuration(duration))"
                                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                                    showToast = false
+                                                    showToast = true
+                                                }
+
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                        showToast = false
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
+                                }
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .padding(.bottom, 120)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                        .padding(.bottom, 120)
+                    }
+                }
+            } else {
+                // glassEffect is only available on iOS 26.0+
+                VStack(spacing: 16) {
+                    ScrollView {
+                        if isLoading {
+                            VStack(spacing: 20) {
+                                ProgressView()
+                                    .controlSize(.large)
+                                    .tint(.primary)
+                                Text("Loading chapters...")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(40)
+                        } else {
+                            LazyVStack(spacing: 12) {
+                                ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                                    ChapterRow(chapter: chapter)
+                                        .onTapGesture {
+                                            if let duration = Double(chapter.duration) {
+                                                toastMessage = "Duration: \(formatDuration(duration))"
+                                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                    showToast = true
+                                                }
+
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                        showToast = false
+                                                    }
+                                                }
+                                            }
+                                        }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .padding(.bottom, 120)
+                        }
                     }
                 }
             }
 
-            // Toast notification with glass effect
             if showToast {
-                Text(toastMessage)
-                    .font(.system(size: 15, weight: .medium))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 20))
-                    .padding(.bottom, 120)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.9).combined(with: .opacity).combined(with: .move(edge: .bottom)),
-                        removal: .scale(scale: 0.95).combined(with: .opacity)
-                    ))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showToast)
+                if #available(iOS 26.0, *) {
+                    Text(toastMessage)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                        .padding(.bottom, 120)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity).combined(with: .move(edge: .bottom)),
+                            removal: .scale(scale: 0.95).combined(with: .opacity)
+                        ))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showToast)
+                } else {
+                    Text(toastMessage)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(.regularMaterial)
+                        .cornerRadius(20)
+                        .padding(.bottom, 120)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity).combined(with: .move(edge: .bottom)),
+                            removal: .scale(scale: 0.95).combined(with: .opacity)
+                        ))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showToast)
+                }
             }
 
-            // Download section with enhanced glass effect
             if !isLoading, !chapters.isEmpty {
                 VStack(spacing: 0) {
-                    // Subtle divider
                     Rectangle()
                         .fill(.separator.opacity(0.3))
                         .frame(height: 1)
@@ -333,33 +386,65 @@ struct BookDetailView: View {
 
                         Spacer()
 
-                        Button(action: {
-                            print("Starting download from BookDetailView")
-                            downloadManager.startDownload(
-                                title: bookTitle,
-                                coverUrl: coverUrl,
-                                chapters: chapters,
-                                source: source
-                            )
-                            print("Download started, showing download manager")
-                            showDownloadManager = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.down.circle.fill")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Download")
-                                    .font(.system(size: 16, weight: .semibold))
+                        if #available(iOS 26.0, *) {
+                            Button(action: {
+                                print("Starting download from BookDetailView")
+                                downloadManager.startDownload(
+                                    title: bookTitle,
+                                    coverUrl: coverUrl,
+                                    chapters: chapters,
+                                    source: source
+                                )
+                                print("Download started, showing download manager")
+                                showDownloadManager = true
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    Text("Download")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundStyle(.primary)
                             }
-                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                        } else {
+                            Button(action: {
+                                print("Starting download from BookDetailView")
+                                downloadManager.startDownload(
+                                    title: bookTitle,
+                                    coverUrl: coverUrl,
+                                    chapters: chapters,
+                                    source: source
+                                )
+                                print("Download started, showing download manager")
+                                showDownloadManager = true
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    Text("Download")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundColor(.primary)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(.regularMaterial)
+                            .cornerRadius(16)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 20)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 0))
-                    .background(.regularMaterial)
+                    if #available(iOS 26.0, *) {
+                        Color.clear
+                            .glassEffect(.regular, in: .rect(cornerRadius: 0))
+                            .background(.regularMaterial)
+                    } else {
+                        Color.clear
+                            .background(.regularMaterial)
+                    }
                 }
             }
         }
@@ -390,7 +475,6 @@ struct ChapterRow: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Chapter indicator
             Circle()
                 .fill(.tertiary)
                 .frame(width: 8, height: 8)
@@ -430,3 +514,4 @@ struct ChapterRow: View {
         )
     }
 }
+

@@ -30,7 +30,6 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                // Background with subtle gradient
                 LinearGradient(
                     colors: [
                         Color(.systemBackground),
@@ -55,16 +54,29 @@ struct ContentView: View {
                             .frame(height: geometry.size.height * 0.05)
                         
                         VStack(spacing: 28) {
-                            // App Icon with Liquid Glass
                             if let appIcon = AppIconProvider.appIcon() {
-                                Image(uiImage: appIcon)
-                                    .resizable()
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                                    .glassEffect(.regular, in: .rect(cornerRadius: 24))
-                                    .shadow(color: .primary.opacity(0.1), radius: 8, y: 4)
-                                    .scaleEffect(1.0)
-                                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: false)
+                                if #available(iOS 26.0, *) {
+                                    Image(uiImage: appIcon)
+                                        .resizable()
+                                        .frame(width: 80, height: 80)
+                                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                                        .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                                        .shadow(color: .primary.opacity(0.1), radius: 8, y: 4)
+                                        .scaleEffect(1.0)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: false)
+                                } else {
+                                    Image(uiImage: appIcon)
+                                        .resizable()
+                                        .frame(width: 80, height: 80)
+                                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 24)
+                                                .fill(Color(.systemBackground))
+                                                .shadow(color: .primary.opacity(0.1), radius: 8, y: 4)
+                                        )
+                                        .scaleEffect(1.0)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: false)
+                                }
                             }
 
                             SiteStatusView(siteStatus: siteStatus)
@@ -292,56 +304,134 @@ struct SearchBar: View {
     let glassNamespace: Namespace.ID
     
     var body: some View {
-        GlassEffectContainer(spacing: 16) {
-            HStack(spacing: 16) {
-                // Search field with liquid glass
-                HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
-                        .font(.system(size: 18, weight: .medium))
-                    
-                    TextField("Search audiobooks...", text: $text)
-                        .textFieldStyle(.plain)
-                        .submitLabel(.search)
-                        .font(.system(size: 16, weight: .medium))
-                        .onSubmit(onSubmit)
-                        .onChange(of: text) { _, newValue in
-                            autocompleteManager.search(query: newValue)
-                        }
-                    
-                    if !text.isEmpty {
-                        Button(action: onClear) {
-                            Image(systemName: "xmark.circle.fill")
+        Group {
+            if #available(iOS 26.0, *) {
+                GlassEffectContainer(spacing: 16) {
+                    HStack(spacing: 16) {
+                        // Search field with liquid glass
+                        HStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
                                 .font(.system(size: 18, weight: .medium))
+                            
+                            TextField("Search audiobooks...", text: $text)
+                                .textFieldStyle(.plain)
+                                .submitLabel(.search)
+                                .font(.system(size: 16, weight: .medium))
+                                .onSubmit(onSubmit)
+                                .onChange(of: text) { _, newValue in
+                                    autocompleteManager.search(query: newValue)
+                                }
+                            
+                            if !text.isEmpty {
+                                Button(action: onClear) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 18, weight: .medium))
+                                }
+                                .buttonStyle(.plain)
+                                .transition(.scale.combined(with: .opacity))
+                            }
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.secondary)
+                                    .scaleEffect(0.8)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .transition(.scale.combined(with: .opacity))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .frame(height: 52)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
+                        .glassEffectID("searchField", in: glassNamespace)
+                        
+                        // Download manager button
+                        Button(action: showDownloadManager) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(.primary)
+                        }
+                        .frame(width: 52, height: 52)
+                        .glassEffect(.regular.interactive(), in: .circle)
                     }
-                    
-                    if isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(.secondary)
-                            .scaleEffect(0.8)
+                    .padding(.horizontal, 20)
+                }
+            } else {
+                VStack(spacing: 16) {
+                    HStack(spacing: 16) {
+                        // Search field with liquid glass
+                        HStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(.secondary)
+                                .font(.system(size: 18, weight: .medium))
+                            
+                            TextField("Search audiobooks...", text: $text)
+                                .textFieldStyle(.plain)
+                                .submitLabel(.search)
+                                .font(.system(size: 16, weight: .medium))
+                                .onSubmit(onSubmit)
+                                .onChange(of: text) { _, newValue in
+                                    autocompleteManager.search(query: newValue)
+                                }
+                            
+                            if !text.isEmpty {
+                                Button(action: onClear) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 18, weight: .medium))
+                                }
+                                .buttonStyle(.plain)
+                                .transition(.scale.combined(with: .opacity))
+                            }
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.secondary)
+                                    .scaleEffect(0.8)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .frame(height: 52)
+                        //.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
+                        //.glassEffectID("searchField", in: glassNamespace)
+                        
+                        // Download manager button
+                        Button(action: showDownloadManager) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(.primary)
+                        }
+                        .frame(width: 52, height: 52)
+                        //.glassEffect(.regular.interactive(), in: .circle)
                     }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .frame(height: 52)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
-                .glassEffectID("searchField", in: glassNamespace)
-                
-                // Download manager button
-                Button(action: showDownloadManager) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-                .frame(width: 52, height: 52)
-                .glassEffect(.regular.interactive(), in: .circle)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(Color(.systemBackground))
+                        .shadow(radius: 6)
+                )
+                .padding(.horizontal)
             }
-            .padding(.horizontal, 20)
+        }
+    }
+}
+
+struct SearchResultRowBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
+        } else {
+            content
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .shadow(radius: 3, y: 1)
+                )
         }
     }
 }
@@ -363,7 +453,7 @@ struct SearchResultRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
+        .modifier(SearchResultRowBackground())
     }
 }
 

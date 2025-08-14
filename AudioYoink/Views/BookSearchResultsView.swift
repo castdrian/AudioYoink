@@ -49,47 +49,81 @@ struct BookSearchResultsView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Fixed source picker at top
-                GlassEffectContainer(spacing: 0) {
-                    HStack {
-                        Picker("Source", selection: $selectedSource) {
-                            ForEach(BookSource.allCases, id: \.self) { source in
-                                Text(source.rawValue.replacingOccurrences(of: ".com", with: "").replacingOccurrences(of: ".net", with: "").replacingOccurrences(of: ".top", with: "")).tag(source)
+                if #available(iOS 26.0, *) {
+                    GlassEffectContainer(spacing: 0) {
+                        HStack {
+                            Picker("Source", selection: $selectedSource) {
+                                ForEach(BookSource.allCases, id: \.self) { source in
+                                    Text(source.rawValue.replacingOccurrences(of: ".com", with: "").replacingOccurrences(of: ".net", with: "").replacingOccurrences(of: ".top", with: "")).tag(source)
+                                }
                             }
+                            .pickerStyle(.segmented)
+                            .animation(.easeInOut, value: selectedSource)
                         }
-                        .pickerStyle(.segmented)
-                        .animation(.easeInOut, value: selectedSource)
-                    }
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-                    .glassEffectID("sourcePicker", in: glassNamespace)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .gesture(
-                        DragGesture()
-                            .onEnded { value in
-                                let threshold: CGFloat = 50
-                                if value.translation.width > threshold {
-                                    // Swipe right - previous source
-                                    withAnimation {
-                                        if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource),
-                                           currentIndex > 0 {
-                                            selectedSource = BookSource.allCases[currentIndex - 1]
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                        .glassEffectID("sourcePicker", in: glassNamespace)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    let threshold: CGFloat = 50
+                                    if value.translation.width > threshold {
+                                        // Swipe right - previous source
+                                        withAnimation {
+                                            if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource), currentIndex > 0 {
+                                                selectedSource = BookSource.allCases[currentIndex - 1]
+                                            }
                                         }
-                                    }
-                                } else if value.translation.width < -threshold {
-                                    // Swipe left - next source
-                                    withAnimation {
-                                        if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource),
-                                           currentIndex < BookSource.allCases.count - 1 {
-                                            selectedSource = BookSource.allCases[currentIndex + 1]
+                                    } else if value.translation.width < -threshold {
+                                        // Swipe left - next source
+                                        withAnimation {
+                                            if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource), currentIndex < BookSource.allCases.count - 1 {
+                                                selectedSource = BookSource.allCases[currentIndex + 1]
+                                            }
                                         }
                                     }
                                 }
+                        )
+                    }
+                    .background(.regularMaterial)
+                    .zIndex(1)
+                } else {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Picker("Source", selection: $selectedSource) {
+                                ForEach(BookSource.allCases, id: \.self) { source in
+                                    Text(source.rawValue.replacingOccurrences(of: ".com", with: "").replacingOccurrences(of: ".net", with: "").replacingOccurrences(of: ".top", with: "")).tag(source)
+                                }
                             }
-                    )
+                            .pickerStyle(.segmented)
+                            .animation(.easeInOut, value: selectedSource)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    let threshold: CGFloat = 50
+                                    if value.translation.width > threshold {
+                                        withAnimation {
+                                            if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource), currentIndex > 0 {
+                                                selectedSource = BookSource.allCases[currentIndex - 1]
+                                            }
+                                        }
+                                    } else if value.translation.width < -threshold {
+                                        withAnimation {
+                                            if let currentIndex = BookSource.allCases.firstIndex(of: selectedSource), currentIndex < BookSource.allCases.count - 1 {
+                                                selectedSource = BookSource.allCases[currentIndex + 1]
+                                            }
+                                        }
+                                    }
+                                }
+                        )
+                    }
+                    .background(.ultraThinMaterial)
+                    .zIndex(1)
                 }
-                .background(.regularMaterial)
-                .zIndex(1)
                 
                 // Scrollable content
                 ScrollView {
@@ -347,8 +381,8 @@ struct SearchResultCard: View {
     let glassNamespace: Namespace.ID
     @State private var showingDetails = false
     
-    var body: some View {
-        NavigationLink(destination: BookDetailView(
+    var cardBody: some View {
+        let view = NavigationLink(destination: BookDetailView(
             url: result.url,
             bookTitle: result.title,
             coverUrl: result.imageUrl
@@ -384,18 +418,30 @@ struct SearchResultCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-        .glassEffectID("card_\(index)", in: glassNamespace)
-        .onLongPressGesture {
-            showingDetails = true
-        }
-        .sheet(isPresented: $showingDetails) {
-            BookDetailView(
-                url: result.url,
-                bookTitle: result.title,
-                coverUrl: result.imageUrl
+        
+        if #available(iOS 26.0, *) {
+            return AnyView(
+                view
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                    .glassEffectID("card_\(index)", in: glassNamespace)
             )
+        } else {
+            return AnyView(view)
         }
+    }
+    
+    var body: some View {
+        cardBody
+            .onLongPressGesture {
+                showingDetails = true
+            }
+            .sheet(isPresented: $showingDetails) {
+                BookDetailView(
+                    url: result.url,
+                    bookTitle: result.title,
+                    coverUrl: result.imageUrl
+                )
+            }
     }
 }
 

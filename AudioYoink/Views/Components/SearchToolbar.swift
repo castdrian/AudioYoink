@@ -39,64 +39,136 @@ struct SearchToolbar: ViewModifier {
                 content
                     .padding(.bottom, 16)
                 
-                GlassEffectContainer(spacing: 16) {
-                    HStack(spacing: 16) {
-                        // Enhanced search field
-                        HStack(spacing: 12) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 18, weight: .medium))
+                if #available(iOS 26.0, *) {
+                    GlassEffectContainer(spacing: 16) {
+                        HStack(spacing: 16) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 18, weight: .medium))
 
-                            TextField("Search audiobooks...", text: $searchText)
-                                .textFieldStyle(.plain)
-                                .submitLabel(.search)
-                                .font(.system(size: 16, weight: .medium))
-                                .onSubmit {
-                                    autocompleteManager.clearResults()
-                                    onSubmit()
-                                }
-                                .focused($internalFocus)
-
-                            if !searchText.isEmpty {
-                                if autocompleteManager.isLoading {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                        .tint(.secondary)
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Button(action: {
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            searchText = ""
-                                            autocompleteManager.clearResults()
-                                            onClear()
-                                        }
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(.secondary)
-                                            .font(.system(size: 18, weight: .medium))
+                                TextField("Search audiobooks...", text: $searchText)
+                                    .textFieldStyle(.plain)
+                                    .submitLabel(.search)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .onSubmit {
+                                        autocompleteManager.clearResults()
+                                        onSubmit()
                                     }
-                                    .buttonStyle(.plain)
+                                    .focused($internalFocus)
+
+                                if !searchText.isEmpty {
+                                    if autocompleteManager.isLoading {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                            .tint(.secondary)
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Button(action: {
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                searchText = ""
+                                                autocompleteManager.clearResults()
+                                                onClear()
+                                            }
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundStyle(.secondary)
+                                                .font(.system(size: 18, weight: .medium))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
                                 }
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .frame(height: 52)
+                            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
+                            .glassEffectID("searchField", in: glassNamespace)
+
+                            // Download manager button
+                            Button(action: showDownloadManager) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                            }
+                            .frame(width: 52, height: 52)
+                            .glassEffect(.regular.interactive(), in: .circle)
                         }
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                        .frame(height: 52)
-                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
-                        .glassEffectID("searchField", in: glassNamespace)
-
-                        // Download manager button
-                        Button(action: showDownloadManager) {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(.primary)
-                        }
-                        .frame(width: 52, height: 52)
-                        .glassEffect(.regular.interactive(), in: .circle)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                } else {
+                    VStack(spacing: 16) {
+                        HStack(spacing: 16) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 18, weight: .medium))
+
+                                TextField("Search audiobooks...", text: $searchText)
+                                    .textFieldStyle(.plain)
+                                    .submitLabel(.search)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .onSubmit {
+                                        autocompleteManager.clearResults()
+                                        onSubmit()
+                                    }
+                                    .focused($internalFocus)
+
+                                if !searchText.isEmpty {
+                                    if autocompleteManager.isLoading {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                            .tint(.secondary)
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Button(action: {
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                searchText = ""
+                                                autocompleteManager.clearResults()
+                                                onClear()
+                                            }
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundStyle(.secondary)
+                                                .font(.system(size: 18, weight: .medium))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .frame(height: 52)
+                            .background(
+                                Group {
+                                    if #available(iOS 26.0, *) {
+                                        Color.clear
+                                            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 26))
+                                            .glassEffectID("searchField", in: glassNamespace)
+                                    }
+                                }
+                            )
+
+                            // Download manager button
+                            Button(action: showDownloadManager) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                            }
+                            .frame(width: 52, height: 52)
+                            .background(
+                                Group {
+                                    if #available(iOS 26.0, *) {
+                                        Color.clear.glassEffect(.regular.interactive(), in: .circle)
+                                    }
+                                }
+                            )
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 16)
                 }
-                .padding(.bottom, 16)
             }
         }
         .onChange(of: searchText) { _, newValue in

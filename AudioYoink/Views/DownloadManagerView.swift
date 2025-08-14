@@ -8,103 +8,202 @@ struct DownloadManagerView: View {
     
     var body: some View {
         NavigationView {
-            GlassEffectContainer(spacing: 20) {
-                List {
-                    if !downloadManager.activeDownloads.isEmpty {
-                        Section {
-                            ForEach(Array(downloadManager.activeDownloads.enumerated()), id: \.element.id) { index, download in
-                                DownloadItemRow(
-                                    title: download.title,
-                                    coverUrl: download.coverUrl,
-                                    progress: download.progress,
-                                    chapterProgress: download.chapterProgress,
-                                    currentChapter: download.currentChapter,
-                                    totalChapters: download.totalChapters,
-                                    status: download.status,
-                                    downloadSpeed: download.downloadSpeed,
-                                    chapterDownloadSpeed: download.chapterDownloadSpeed
-                                )
-                                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-                                .glassEffectID("active_\(index)", in: glassNamespace)
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                                .swipeActions {
-                                    Button(role: .destructive) {
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                            downloadManager.cancelDownload(download)
-                                        }
-                                    } label: {
-                                        Label("Cancel", systemImage: "xmark")
-                                    }
-                                    .tint(.red)
-                                }
-                            }
-                        } header: {
-                            Text("Active Downloads")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.primary)
-                                .padding(.bottom, 8)
-                        }
-                        .listSectionSeparator(.hidden)
-                    }
-                    
-                    if !downloadManager.completedDownloads.isEmpty {
-                        Section {
-                            ForEach(Array(downloadManager.completedDownloads.enumerated()), id: \.element.id) { index, download in
-                                CompletedDownloadView(download: download)
+            if #available(iOS 26.0, *) {
+                GlassEffectContainer(spacing: 20) {
+                    List {
+                        if !downloadManager.activeDownloads.isEmpty {
+                            Section {
+                                ForEach(Array(downloadManager.activeDownloads.enumerated()), id: \.element.id) { index, download in
+                                    DownloadItemRow(
+                                        title: download.title,
+                                        coverUrl: download.coverUrl,
+                                        progress: download.progress,
+                                        chapterProgress: download.chapterProgress,
+                                        currentChapter: download.currentChapter,
+                                        totalChapters: download.totalChapters,
+                                        status: download.status,
+                                        downloadSpeed: download.downloadSpeed,
+                                        chapterDownloadSpeed: download.chapterDownloadSpeed
+                                    )
                                     .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
-                                    .glassEffectID("completed_\(index)", in: glassNamespace)
+                                    .glassEffectID("active_\(index)", in: glassNamespace)
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
                                     .swipeActions {
                                         Button(role: .destructive) {
                                             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                                downloadManager.removeCompletedDownload(download)
+                                                downloadManager.cancelDownload(download)
                                             }
                                         } label: {
-                                            Label("Delete", systemImage: "trash")
+                                            Label("Cancel", systemImage: "xmark")
                                         }
                                         .tint(.red)
                                     }
+                                }
+                            } header: {
+                                Text("Active Downloads")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .padding(.bottom, 8)
                             }
-                        } header: {
-                            Text("Completed")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.primary)
-                                .padding(.bottom, 8)
+                            .listSectionSeparator(.hidden)
                         }
-                        .listSectionSeparator(.hidden)
+
+                        if !downloadManager.completedDownloads.isEmpty {
+                            Section {
+                                ForEach(Array(downloadManager.completedDownloads.enumerated()), id: \.element.id) { index, download in
+                                    CompletedDownloadView(download: download)
+                                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                                        .glassEffectID("completed_\(index)", in: glassNamespace)
+                                        .listRowBackground(Color.clear)
+                                        .listRowSeparator(.hidden)
+                                        .swipeActions {
+                                            Button(role: .destructive) {
+                                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                    downloadManager.removeCompletedDownload(download)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                            .tint(.red)
+                                        }
+                                }
+                            } header: {
+                                Text("Completed")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .padding(.bottom, 8)
+                            }
+                            .listSectionSeparator(.hidden)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background {
+                        LinearGradient(
+                            colors: [
+                                Color(.systemBackground),
+                                Color(.systemBackground).opacity(0.95),
+                                Color(.systemGray6).opacity(0.2)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .ignoresSafeArea()
+                    }
+                    .navigationTitle("Downloads")
+                    .navigationBarTitleDisplayMode(.large)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(.primary)
+                            }
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(.regularMaterial)
+                            )
+                            .clipShape(Circle())
+                        }
                     }
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background {
-                    LinearGradient(
-                        colors: [
-                            Color(.systemBackground),
-                            Color(.systemBackground).opacity(0.95),
-                            Color(.systemGray6).opacity(0.2)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                }
-                .navigationTitle("Downloads")
-                .navigationBarTitleDisplayMode(.large)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.primary)
+            } else {
+                VStack(spacing: 20) {
+                    List {
+                        if !downloadManager.activeDownloads.isEmpty {
+                            Section {
+                                ForEach(Array(downloadManager.activeDownloads.enumerated()), id: \.element.id) { index, download in
+                                    DownloadItemRow(
+                                        title: download.title,
+                                        coverUrl: download.coverUrl,
+                                        progress: download.progress,
+                                        chapterProgress: download.chapterProgress,
+                                        currentChapter: download.currentChapter,
+                                        totalChapters: download.totalChapters,
+                                        status: download.status,
+                                        downloadSpeed: download.downloadSpeed,
+                                        chapterDownloadSpeed: download.chapterDownloadSpeed
+                                    )
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .swipeActions {
+                                        Button(role: .destructive) {
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                downloadManager.cancelDownload(download)
+                                            }
+                                        } label: {
+                                            Label("Cancel", systemImage: "xmark")
+                                        }
+                                        .tint(.red)
+                                    }
+                                }
+                            } header: {
+                                Text("Active Downloads")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .padding(.bottom, 8)
+                            }
+                            .listSectionSeparator(.hidden)
                         }
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(.regularMaterial)
+
+                        if !downloadManager.completedDownloads.isEmpty {
+                            Section {
+                                ForEach(Array(downloadManager.completedDownloads.enumerated()), id: \.element.id) { index, download in
+                                    CompletedDownloadView(download: download)
+                                        .listRowBackground(Color.clear)
+                                        .listRowSeparator(.hidden)
+                                        .swipeActions {
+                                            Button(role: .destructive) {
+                                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                                    downloadManager.removeCompletedDownload(download)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                            .tint(.red)
+                                        }
+                                }
+                            } header: {
+                                Text("Completed")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .padding(.bottom, 8)
+                            }
+                            .listSectionSeparator(.hidden)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background {
+                        LinearGradient(
+                            colors: [
+                                Color(.systemBackground),
+                                Color(.systemBackground).opacity(0.95),
+                                Color(.systemGray6).opacity(0.2)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                        .clipShape(Circle())
+                        .ignoresSafeArea()
+                    }
+                    .navigationTitle("Downloads")
+                    .navigationBarTitleDisplayMode(.large)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(.primary)
+                            }
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(.regularMaterial)
+                            )
+                            .clipShape(Circle())
+                        }
                     }
                 }
             }
