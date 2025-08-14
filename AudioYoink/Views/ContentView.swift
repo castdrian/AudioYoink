@@ -152,7 +152,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .withGitHubButton()
+            .withToolbarButtons()
             .sheet(isPresented: $showDownloadManager) {
                 DownloadManagerView()
             }

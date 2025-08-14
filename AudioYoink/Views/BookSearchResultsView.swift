@@ -254,7 +254,7 @@ struct BookSearchResultsView: View {
                 NotificationCenter.default.post(name: NSNotification.Name("ClearSearchState"), object: nil)
             }
         }
-        .withGitHubButton()
+        .withToolbarButtons()
     }
 
     private func refreshSearch() async {
@@ -454,3 +454,4 @@ struct SearchResultCard: View {
         )
     }
 }
+

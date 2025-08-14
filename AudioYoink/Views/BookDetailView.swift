@@ -463,7 +463,7 @@ struct BookDetailView: View {
                 errorMessage = "Failed to fetch chapters: \(error.localizedDescription)"
             }
         }
-        .withGitHubButton()
+        .withToolbarButtons()
         .sheet(isPresented: $showDownloadManager) {
             DownloadManagerView()
         }
@@ -514,4 +514,3 @@ struct ChapterRow: View {
         )
     }
 }
-
